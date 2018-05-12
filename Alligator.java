@@ -114,10 +114,6 @@ public class Alligator extends Application {
 
 
     }
-    /* kallar create article i databasen */
-    private boolean createArticle(String lev, String name, String nr){
-        return db.createArticle(lev,name,nr);
-    }
 
 
     private VBox createArtMeny(){
@@ -140,8 +136,8 @@ public class Alligator extends Application {
         prodNrValArt.getChildren().addAll(new Text("Produktnummer: "), prodNrValArtTx);
 
         Button skapaArt = new Button("Lägg till artikel");
-        skapaArt.setOnAction(e->{
-            if(createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
+        skapaArt.setOnAction(e->{ ;
+            if(db.createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
                 AlertBox.display("Meddelande","Artikel tillagd");
             }
             else{
@@ -313,21 +309,7 @@ public class Alligator extends Application {
             default:
                 break;
 
-        }/*
-        tab.getColumns().addAll(levCol, nameCol, nrCol, prisCol, projCol,prioCol);
-
-        if(name == "Godkänn"){
-            tab.getColumns().add(chemCol);
         }
-
-        tab.getColumns().addAll(userCol, dateCol);
-        if(name == "Mottagen"){
-            tab.getColumns().add(col_kyl);
-        }else if(name == "Ta bort"){
-            tab.getColumns().add(col_kylRes);
-        }
-
-        tab.getColumns().addAll(col_action); */
         bp.setBottom(tab);
 
     }
@@ -365,10 +347,8 @@ public class Alligator extends Application {
                 int i = getTableRow().getIndex();
                 ObservableList<Article> data = getTableView().getItems();
                 Article selArt = data.get(i);
-                System.out.println(selArt.getLev());
-                System.out.println(selArt.getKyl());
-                db.orderAccepted(name, selArt.getLev(), selArt.getName(), selArt.getNr(), selArt.getPris(), selArt.getProj(), selArt.getPrio(),
-                        selArt.getChemText(), selArt.getUser(), selArt.getDate(), selArt.getOrdered(), selArt.getReceived(), selArt.getKyl());
+                System.out.println(selArt.getID() + " tab: "+ selArt.getTable());
+                db.orderAccepted(selArt.getTable(), selArt.getID()); //kanske också kyl
                 showTable(name);
             });
 
