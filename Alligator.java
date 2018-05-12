@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 
 public class Alligator extends Application {
 
+    private ObservableList<Article> data;
     private Scene adminScene;
     private ComboBox<String> levCB, levArtCB;
     private BorderPane bp;
@@ -239,7 +240,7 @@ public class Alligator extends Application {
     private void showTable(String name){
         TableView<Article> tab = new TableView<>();
         // TODO tab.setMaxSize(600, 10000);
-        ObservableList <Article> data = db.getTable(name);
+        data = db.getTable(name);
 
         TableColumn<Article,String> levCol = new TableColumn<>("Leverantör");
         levCol.setMinWidth(100);
@@ -265,6 +266,12 @@ public class Alligator extends Application {
         TableColumn<Article,String> dateCol = new TableColumn<>("Skapad");
         dateCol.setMinWidth(100);
         dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
+        TableColumn<Article,String> bestCol = new TableColumn<>("Beställd");
+        bestCol.setMinWidth(100);
+        bestCol.setCellValueFactory(new PropertyValueFactory<>("ordered"));
+        TableColumn<Article,String> recCol = new TableColumn<>("Mottagen");
+        recCol.setMinWidth(100);
+        recCol.setCellValueFactory(new PropertyValueFactory<>("received"));
         TableColumn<Article,String> userCol = new TableColumn<>("Användare");
         userCol.setMinWidth(100);
         userCol.setCellValueFactory(new PropertyValueFactory<>("user"));
@@ -273,7 +280,7 @@ public class Alligator extends Application {
         TableColumn col_kyl = new TableColumn<>("Placeras i");
         col_kyl.setMinWidth(100);
         col_kyl.setSortable(false);
-        col_kyl.setCellFactory(e->new ListCell(data));
+        col_kyl.setCellFactory(e->new ListCell());
 
         TableColumn col_kylRes = new TableColumn<>("Placerad i");
         col_kylRes.setMinWidth(100);
@@ -287,6 +294,26 @@ public class Alligator extends Application {
 
 
         tab.setItems(data);
+
+        //case system istället.
+
+        switch(name){
+            case "Godkänn":
+                tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol, col_action);
+                break;
+            case "Beställd":
+                tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_action);
+                break;
+            case "Mottagen":
+                tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
+                break;
+            case "Ta bort": /// ta bort??? ska inte ha någon add
+                tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes,col_action);
+                break;
+            default:
+                break;
+
+        }/*
         tab.getColumns().addAll(levCol, nameCol, nrCol, prisCol, projCol,prioCol);
 
         if(name == "Godkänn"){
@@ -300,13 +327,13 @@ public class Alligator extends Application {
             tab.getColumns().add(col_kylRes);
         }
 
-        tab.getColumns().addAll(col_action);
+        tab.getColumns().addAll(col_action); */
         bp.setBottom(tab);
 
     }
     private class ListCell extends TableCell<Article, Boolean>{
         private ComboBox<String> alts = new ComboBox<>();
-        ListCell(ObservableList<Article> data){
+        ListCell(){
             ObservableList<String> options = FXCollections.observableArrayList();
             options.add("Kyl");
             options.add("Frys -20");
@@ -341,7 +368,7 @@ public class Alligator extends Application {
                 System.out.println(selArt.getLev());
                 System.out.println(selArt.getKyl());
                 db.orderAccepted(name, selArt.getLev(), selArt.getName(), selArt.getNr(), selArt.getPris(), selArt.getProj(), selArt.getPrio(),
-                        selArt.getChemText(), selArt.getUser(), selArt.getDate(), selArt.getKyl());
+                        selArt.getChemText(), selArt.getUser(), selArt.getDate(), selArt.getOrdered(), selArt.getReceived(), selArt.getKyl());
                 showTable(name);
             });
 

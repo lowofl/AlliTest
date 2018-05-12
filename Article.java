@@ -10,6 +10,34 @@ public class Article {
     private SimpleStringProperty date = new SimpleStringProperty();
     private SimpleStringProperty user = new SimpleStringProperty();
 
+    public String getReceived() {
+        return received.get();
+    }
+
+    public SimpleStringProperty receivedProperty() {
+        return received;
+    }
+
+    public void setReceived(String received) {
+        this.received.set(received);
+    }
+
+    private SimpleStringProperty received = new SimpleStringProperty();
+
+    public String getOrdered() {
+        return ordered.get();
+    }
+
+    public SimpleStringProperty orderedProperty() {
+        return ordered;
+    }
+
+    public void setOrdered(String ordered) {
+        this.ordered.set(ordered);
+    }
+
+    private SimpleStringProperty ordered = new SimpleStringProperty();
+
     public String getPris() {
         return pris.get();
     }
