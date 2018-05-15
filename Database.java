@@ -53,53 +53,10 @@ public class Database {
                 + " ordered text, \n"
                 + " date text, \n"
                 + " user text NOT NULL, \n"
-                + " kyl text, \n"
+                + " kyl text DEFAULT RT, \n"
+                + " mottagen text, \n"
                 + " tabell text NOT NULL \n"
                 + ");";
-
-        //deklarerar tabellen bests
-
-        /*String bests = "CREATE TABLE IF NOT EXISTS bests(\n"
-                + "	id integer PRIMARY KEY,\n"
-                + "	lev text NOT NULL,\n"
-                + "	name text NOT NULL,\n"
-                + " pris text NOT NULL,\n"
-                + "	proj text NOT NULL,\n"
-                + " chemText text, \n"
-                + " date text NOT NULL \n"
-                + ");";
-
-
-        String orders = "CREATE TABLE IF NOT EXISTS orders(\n"
-                + "	id integer PRIMARY KEY,\n"
-                + "	lev text NOT NULL,\n"
-                + "	name text NOT NULL,\n"
-                + "	nr text NOT NULL,\n"
-                + " prio text NOT NULL, \n"
-                + " date text NOT NULL, \n"
-                + " user text NOT NULL \n"
-                + ");";
-
-        String deliveries = "CREATE TABLE IF NOT EXISTS deliveries(\n"
-                + "	id integer PRIMARY KEY,\n"
-                + "	lev text NOT NULL,\n"
-                + "	name text NOT NULL,\n"
-                + "	nr text NOT NULL,\n"
-                + " ordered text NOT NULL, \n"
-                + " user text NOT NULL \n"
-                + ");";
-
-        String fintable = "CREATE TABLE IF NOT EXISTS fintable(\n"
-                + "	id integer PRIMARY KEY,\n"
-                + "	lev text NOT NULL,\n"
-                + "	name text NOT NULL,\n"
-                + "	nr text NOT NULL,\n"
-                + " prio text NOT NULL, \n"
-                + " date text NOT NULL, \n"
-                + " user text NOT NULL, \n"
-                + " kyl text \n"
-                + ");";
-        */
 
         try (
                 Connection conn = DriverManager.getConnection(name);
@@ -149,20 +106,24 @@ public class Database {
     }
     /* Returnerar data över en tabell i bests */
     public ObservableList <Article> getTable(String table){
-        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date,ordered,tabell,kyl FROM orders WHERE tabell = ";
-        if(table == "Godkänn"){
+        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date,ordered,tabell,kyl,mottagen FROM orders WHERE tabell = ";
+        if(table.equals("Godkänn")){
             sql += "'bests'";
-        }else if(table == "Beställd"){
+        }else if(table.equals("Beställd")){
             sql += "'orders'";
-        }else if(table == "Mottagen"){
+        }else if(table.equals("Mottagen")){
             sql += "'deliveries'";
-        }else if(table == "Ta bort"){
+        }else if(table.equals("Ta bort")){
             sql += "'fintable'";
+        }else if(table.equals("Rapporter")){
+            sql += "'reports'";
         }
+
         ObservableList <Article> data = FXCollections.observableArrayList();
         try {
             Connection conn = connect();
             ResultSet rs = conn.createStatement().executeQuery(sql);
+
             while (rs.next()) {
                 Article art = new Article();
                 art.setID(rs.getInt("id"));
@@ -178,6 +139,7 @@ public class Database {
                 art.setDate(rs.getString("date"));
                 art.setKyl(rs.getString("kyl"));
                 art.setTable(rs.getString("tabell"));
+                art.setReceived(rs.getString("mottagen"));
 
                 data.add(art);
             }
@@ -266,16 +228,16 @@ public class Database {
     public void orderAccepted(String table, int id){
 
         String sql = "UPDATE orders SET tabell=? WHERE id=?";
-        if(table == "bests"){
+        if(table.equals("bests")){
             table = "orders";
-        }else if(table == "orders"){
+        }else if(table.equals("orders")){
             table = "deliveries";
-        }else if(table == "deliveries"){
+        }else if(table.equals("deliveries")){
+            setMottagen(id);
             table = "fintable";
-        }else if(table == "fintable"){
+        }else if(table.equals("fintable")){
             table = "reports";
         }
-
         try {
             Connection conn = connect();
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -286,5 +248,32 @@ public class Database {
             System.out.println(e.getMessage());
         }
 
+    }
+    public void setKyl(int id, String kyl){
+        String sql = "UPDATE orders SET kyl=? WHERE id=?";
+
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,kyl);
+            pstmt.setInt(2, id);
+            pstmt.executeUpdate();
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    private void setMottagen(int id){
+        String sql = "UPDATE orders SET mottagen=? WHERE id=?";
+        Date d = new Date(System.currentTimeMillis());
+        String mottagen = d.toString();
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,mottagen);
+            pstmt.setInt(2, id);
+            pstmt.executeUpdate();
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

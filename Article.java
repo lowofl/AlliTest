@@ -93,7 +93,7 @@ public class Article {
         this.kyl.set(kyl);
     }
 
-    private SimpleStringProperty kyl = new SimpleStringProperty();
+    private SimpleStringProperty kyl = new SimpleStringProperty("RT");
 
 
     public void setLev(String lev) {

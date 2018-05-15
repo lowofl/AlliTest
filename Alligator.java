@@ -61,7 +61,7 @@ public class Alligator extends Application {
             levCB.setItems(db.getLevOptions());
         });
         Button rappButton = new Button("Rapporter");
-        rappButton.setOnAction(e -> System.out.println("Rapporter"));
+        rappButton.setOnAction(e -> setRapp());
 
 
         //lägger de övre knapparna i horisontell låda
@@ -92,10 +92,6 @@ public class Alligator extends Application {
         Button levButton = new Button("Levererade varor");
         levButton.setOnAction(e -> showTable("Ta bort"));
 
-
-        //TODO skapa rapportknappar.
-
-
         //lägger adminknappar i horisontell låda
         adminButtons.getChildren().addAll(artButton);
 
@@ -115,7 +111,30 @@ public class Alligator extends Application {
 
     }
 
+    private void setRapp(){
 
+        //bp set center sökfunktion?
+        VBox fullSearch = new VBox(5);
+        HBox search = new HBox(10);
+        TextField levVal = new TextField("");
+        levVal.setEditable(true);
+        levVal.setMaxWidth(75);
+        TextField nameVal = new TextField("");
+        nameVal.setEditable(true);
+        nameVal.setMaxWidth(75);
+        TextField nrVal = new TextField("");
+        nrVal.setEditable(true);
+        nrVal.setMaxWidth(75);
+        DatePicker dp = new DatePicker();
+        dp.setMaxWidth(100);
+        DatePicker dtp = new DatePicker();
+        dtp.setMaxWidth(100);
+        Button srch = new Button("Sök"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
+        search.getChildren().addAll(new Text("Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
+        fullSearch.getChildren().addAll(new Text("Sök: "),search);
+        bp.setCenter(fullSearch);
+        showTable("Rapporter");
+    }
     private VBox createArtMeny(){
         VBox artMeny = new VBox(10);
         BorderPane.setMargin(artMeny, new Insets(10, 10, 400, 10));
@@ -163,8 +182,6 @@ public class Alligator extends Application {
 
 
         ObservableList<String> levOptions = db.getLevOptions();
-
-                //TODO 26e kylmeny?, SNYGGARE
         levCB = new ComboBox<>(levOptions);
         levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(levCB.getValue())));
         levCB.setEditable(false);
@@ -306,6 +323,9 @@ public class Alligator extends Application {
             case "Ta bort": /// ta bort??? ska inte ha någon add
                 tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes,col_action);
                 break;
+            case "Rapporter":
+                tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes); //välj vilka som syns?
+                break;
             default:
                 break;
 
@@ -317,17 +337,19 @@ public class Alligator extends Application {
         private ComboBox<String> alts = new ComboBox<>();
         ListCell(){
             ObservableList<String> options = FXCollections.observableArrayList();
+            options.add("RT");
             options.add("Kyl");
             options.add("Frys -20");
             options.add("Frys -80");
             alts.setOnAction(event -> {
+
                 Article temp = data.get(getTableRow().getIndex());
-                temp.setKyl(alts.getValue());
-                data.set(getTableRow().getIndex(),temp);
+                db.setKyl(temp.getID(), alts.getValue());
+
             });
             alts.setItems(options);
             alts.setEditable(false);
-            alts.setValue("Kyl");
+            alts.setValue("RT");
 
         }
         @Override
@@ -347,7 +369,6 @@ public class Alligator extends Application {
                 int i = getTableRow().getIndex();
                 ObservableList<Article> data = getTableView().getItems();
                 Article selArt = data.get(i);
-                System.out.println(selArt.getID() + " tab: "+ selArt.getTable());
                 db.orderAccepted(selArt.getTable(), selArt.getID()); //kanske också kyl
                 showTable(name);
             });
