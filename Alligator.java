@@ -19,7 +19,7 @@ public class Alligator extends Application {
 
     private ObservableList<Article> data;
     private Scene adminScene;
-    private ComboBox<String> levCB;
+    private ComboBox<String> levCB, levArtCB, taBortLevCB;
     private BorderPane bp;
     private Database db = new Database("database.db");
     private User currentUser = new User("Olof", true,true);
@@ -131,13 +131,13 @@ public class Alligator extends Application {
         Button artButton = new Button("Ny artikel");
         artButton.setOnAction(e -> {
             bp.setBottom(artMeny);
-            levCB.setItems(db.getLevOptions());
+            levArtCB.setItems(db.getLevOptions());
         });
 
         Button taBortArtButton = new Button("Ta bort artikel");
         taBortArtButton.setOnAction(e -> {
             bp.setBottom(taBortMeny);
-            levCB.setItems(db.getLevOptions());
+            taBortLevCB.setItems(db.getLevOptions());
         });
 
 
@@ -175,44 +175,7 @@ public class Alligator extends Application {
 
 
     }
-    private VBox createTaBortMeny(){
-        VBox taBortMeny = new VBox(10);
-        BorderPane.setMargin(taBortMeny, new Insets(10, 10, 400, 10));
-        HBox levValArt = new HBox(5);
-        ObservableList<String> levArtOptions = db.getLevOptions();
-        levCB = new ComboBox<>(levArtOptions);
-        levCB.setEditable(false);
-        levValArt.getChildren().addAll(new Text("Leverantör: "), levCB);
 
-        HBox prodVal = new HBox(5);
-        ComboBox<String> prodCB = new ComboBox<>(db.getProdOptions(""));
-        prodCB.setEditable(false);
-        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(levCB.getValue())));
-        prodVal.getChildren().addAll(new Text("Produkt: "), prodCB);
-        HBox nrVal = new HBox(5);
-        TextField nrTx = new TextField();
-        nrTx.setEditable(false);
-        nrVal.getChildren().addAll(new Text("Produktnummer: "), nrTx);
-        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr(levCB.getValue(),prodCB.getValue())));
-
-        Button taBortArt = new Button("Ta bort artikel");
-        taBortArt.setOnAction(e->{
-            if(db.removeArticle(levCB.getValue(), prodCB.getValue(), nrTx.getText() )){
-                AlertBox.display("Meddelande","Artikel borttagen");
-                levCB.setItems(db.getLevOptions());
-                levCB.setValue("");
-                prodCB.setValue("");
-                nrTx.setText("");
-            }
-            else{
-                AlertBox.display("Meddelande","Artikel kunde inte tas bort");
-            }
-
-        });
-
-        taBortMeny.getChildren().addAll(levValArt,prodVal,nrVal,taBortArt);
-        return taBortMeny;
-    }
     private void setRapp(){
         VBox fullSearch = new VBox(5); //bp set center sökfunktion??
         HBox search = new HBox(10);
@@ -229,12 +192,12 @@ public class Alligator extends Application {
         dp.setMaxWidth(100);
         DatePicker dtp = new DatePicker();
         dtp.setMaxWidth(100);
-        Button srch = new Button("Sök"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
+        Button srch = new Button("Filtrera"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
         srch.setOnAction(e->{
 
         });
-        search.getChildren().addAll(new Text("Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
-        fullSearch.getChildren().addAll(new Text("Sök: "),search);
+        search.getChildren().addAll(new Text("  Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
+        fullSearch.getChildren().addAll(new Text("  Filtrera: "),search);
         bp.setCenter(fullSearch);
         showTable("Rapporter");
     }
@@ -244,9 +207,9 @@ public class Alligator extends Application {
         BorderPane.setMargin(artMeny, new Insets(10, 10, 400, 10));
         HBox levValArt = new HBox(5);
         ObservableList<String> levArtOptions = db.getLevOptions();
-        levCB = new ComboBox<>(levArtOptions);
-        levCB.setEditable(true);
-        levValArt.getChildren().addAll(new Text("Leverantör: "), levCB);
+        levArtCB = new ComboBox<>(levArtOptions);
+        levArtCB.setEditable(true);
+        levValArt.getChildren().addAll(new Text("Leverantör: "), levArtCB);
 
         HBox prodValArt = new HBox(5);
         TextField prodValArtTx = new TextField("");
@@ -260,15 +223,15 @@ public class Alligator extends Application {
 
         Button skapaArt = new Button("Lägg till artikel");
         skapaArt.setOnAction(e->{
-            if(db.createArticle(levCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
+            if(db.createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
                 AlertBox.display("Meddelande","Artikel tillagd");
             }
             else{
                 AlertBox.display("Meddelande","Artikel kunde inte läggas till");
             }
 
-            levCB.setItems(db.getLevOptions());
-            levCB.setValue("");
+            levArtCB.setItems(db.getLevOptions());
+            levArtCB.setValue("");
             prodValArtTx.setText("");
             prodNrValArtTx.setText("");
 
@@ -340,6 +303,44 @@ public class Alligator extends Application {
 
         laggMeny.getChildren().addAll(levVal, prodVal, nrVal, prisVal, projVal, prioVal, chem, skapaBest);
         return laggMeny;
+    }
+    private VBox createTaBortMeny(){
+        VBox taBortMeny = new VBox(10);
+        BorderPane.setMargin(taBortMeny, new Insets(10, 10, 400, 10));
+        HBox levValArt = new HBox(5);
+        ObservableList<String> levArtOptions = db.getLevOptions();
+        taBortLevCB = new ComboBox<>(levArtOptions);
+        taBortLevCB.setEditable(false);
+        levValArt.getChildren().addAll(new Text("Leverantör: "), taBortLevCB);
+
+        HBox prodVal = new HBox(5);
+        ComboBox<String> prodCB = new ComboBox<>(db.getProdOptions(""));
+        prodCB.setEditable(false);
+        taBortLevCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(taBortLevCB.getValue())));
+        prodVal.getChildren().addAll(new Text("Produkt: "), prodCB);
+        HBox nrVal = new HBox(5);
+        TextField nrTx = new TextField();
+        nrTx.setEditable(false);
+        nrVal.getChildren().addAll(new Text("Produktnummer: "), nrTx);
+        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr(taBortLevCB.getValue(),prodCB.getValue())));
+
+        Button taBortArt = new Button("Ta bort artikel");
+        taBortArt.setOnAction(e->{
+            if(db.removeArticle(taBortLevCB.getValue(), prodCB.getValue(), nrTx.getText() )){
+                AlertBox.display("Meddelande","Artikel borttagen");
+                taBortLevCB.setItems(db.getLevOptions());
+                taBortLevCB.setValue("");
+                prodCB.setValue("");
+                nrTx.setText("");
+            }
+            else{
+                AlertBox.display("Meddelande","Artikel kunde inte tas bort");
+            }
+
+        });
+
+        taBortMeny.getChildren().addAll(levValArt,prodVal,nrVal,taBortArt);
+        return taBortMeny;
     }
     private void confirmOrder(String lev, String prod, String nr, String pris, String proj, String prio, CheckBox chem){
         String chemText = " ";
