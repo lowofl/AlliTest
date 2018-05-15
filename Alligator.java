@@ -193,6 +193,7 @@ public class Alligator extends Application {
         DatePicker dtp = new DatePicker();
         dtp.setMaxWidth(100);
         Button srch = new Button("Filtrera"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
+        
         srch.setOnAction(e->{
 
         });
