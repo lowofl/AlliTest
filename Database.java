@@ -313,6 +313,22 @@ public class Database {
         return user;
 
     }
+    public boolean removeArticle(String lev,String name,String nr){
+        String sql = "DELETE FROM articles WHERE lev=? AND name=? AND nr=?";
 
+        try (Connection conn = this.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, lev);
+            pstmt.setString(2, name);
+            pstmt.setString(3, nr);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        } // TODO om det var sista artikeln från en leverantör, ta bort leverantören?
+        return true;
+
+
+    }
 }
 

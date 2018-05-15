@@ -19,7 +19,7 @@ public class Alligator extends Application {
 
     private ObservableList<Article> data;
     private Scene adminScene;
-    private ComboBox<String> levCB, levArtCB;
+    private ComboBox<String> levCB;
     private BorderPane bp;
     private Database db = new Database("database.db");
     private User currentUser = new User("Olof", true,true);
@@ -99,6 +99,7 @@ public class Alligator extends Application {
 
         VBox artMeny = createArtMeny();
         VBox laggMeny = createLaggMeny();
+        VBox taBortMeny = createTaBortMeny();
 
 
         // bygger de övre knapparna
@@ -106,7 +107,7 @@ public class Alligator extends Application {
         adminButton.setOnAction(e -> {
             bp.setCenter(adminButtons);
             bp.setBottom(artMeny);
-            levArtCB.setItems(db.getLevOptions());
+            levCB.setItems(db.getLevOptions());
         });
         Button bestButton = new Button("Beställningar");
         bestButton.setOnAction(e -> {
@@ -130,7 +131,13 @@ public class Alligator extends Application {
         Button artButton = new Button("Ny artikel");
         artButton.setOnAction(e -> {
             bp.setBottom(artMeny);
-            levArtCB.setItems(db.getLevOptions());
+            levCB.setItems(db.getLevOptions());
+        });
+
+        Button taBortArtButton = new Button("Ta bort artikel");
+        taBortArtButton.setOnAction(e -> {
+            bp.setBottom(taBortMeny);
+            levCB.setItems(db.getLevOptions());
         });
 
 
@@ -151,7 +158,7 @@ public class Alligator extends Application {
         levButton.setOnAction(e -> showTable("Ta bort"));
 
         //lägger adminknappar i horisontell låda
-        adminButtons.getChildren().addAll(artButton);
+        adminButtons.getChildren().addAll(artButton,taBortArtButton);
 
         //lägger beställningsknappar i horisontell låda
         bestButtons.getChildren().addAll(laggBest, nyBestButton, attestButton, godkButton, levButton);
@@ -167,6 +174,44 @@ public class Alligator extends Application {
         primaryStage.show();
 
 
+    }
+    private VBox createTaBortMeny(){
+        VBox taBortMeny = new VBox(10);
+        BorderPane.setMargin(taBortMeny, new Insets(10, 10, 400, 10));
+        HBox levValArt = new HBox(5);
+        ObservableList<String> levArtOptions = db.getLevOptions();
+        levCB = new ComboBox<>(levArtOptions);
+        levCB.setEditable(false);
+        levValArt.getChildren().addAll(new Text("Leverantör: "), levCB);
+
+        HBox prodVal = new HBox(5);
+        ComboBox<String> prodCB = new ComboBox<>(db.getProdOptions(""));
+        prodCB.setEditable(false);
+        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(levCB.getValue())));
+        prodVal.getChildren().addAll(new Text("Produkt: "), prodCB);
+        HBox nrVal = new HBox(5);
+        TextField nrTx = new TextField();
+        nrTx.setEditable(false);
+        nrVal.getChildren().addAll(new Text("Produktnummer: "), nrTx);
+        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr(levCB.getValue(),prodCB.getValue())));
+
+        Button taBortArt = new Button("Ta bort artikel");
+        taBortArt.setOnAction(e->{
+            if(db.removeArticle(levCB.getValue(), prodCB.getValue(), nrTx.getText() )){
+                AlertBox.display("Meddelande","Artikel borttagen");
+                levCB.setItems(db.getLevOptions());
+                levCB.setValue("");
+                prodCB.setValue("");
+                nrTx.setText("");
+            }
+            else{
+                AlertBox.display("Meddelande","Artikel kunde inte tas bort");
+            }
+
+        });
+
+        taBortMeny.getChildren().addAll(levValArt,prodVal,nrVal,taBortArt);
+        return taBortMeny;
     }
     private void setRapp(){
         VBox fullSearch = new VBox(5); //bp set center sökfunktion??
@@ -185,20 +230,23 @@ public class Alligator extends Application {
         DatePicker dtp = new DatePicker();
         dtp.setMaxWidth(100);
         Button srch = new Button("Sök"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
+        srch.setOnAction(e->{
+
+        });
         search.getChildren().addAll(new Text("Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
         fullSearch.getChildren().addAll(new Text("Sök: "),search);
         bp.setCenter(fullSearch);
         showTable("Rapporter");
-            }
+    }
 
     private VBox createArtMeny(){
         VBox artMeny = new VBox(10);
         BorderPane.setMargin(artMeny, new Insets(10, 10, 400, 10));
         HBox levValArt = new HBox(5);
         ObservableList<String> levArtOptions = db.getLevOptions();
-        levArtCB = new ComboBox<>(levArtOptions);
-        levArtCB.setEditable(true);
-        levValArt.getChildren().addAll(new Text("Leverantör: "), levArtCB);
+        levCB = new ComboBox<>(levArtOptions);
+        levCB.setEditable(true);
+        levValArt.getChildren().addAll(new Text("Leverantör: "), levCB);
 
         HBox prodValArt = new HBox(5);
         TextField prodValArtTx = new TextField("");
@@ -212,15 +260,15 @@ public class Alligator extends Application {
 
         Button skapaArt = new Button("Lägg till artikel");
         skapaArt.setOnAction(e->{
-            if(db.createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
+            if(db.createArticle(levCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
                 AlertBox.display("Meddelande","Artikel tillagd");
             }
             else{
                 AlertBox.display("Meddelande","Artikel kunde inte läggas till");
             }
 
-            levArtCB.setItems(db.getLevOptions());
-            levArtCB.setValue("");
+            levCB.setItems(db.getLevOptions());
+            levCB.setValue("");
             prodValArtTx.setText("");
             prodNrValArtTx.setText("");
 
