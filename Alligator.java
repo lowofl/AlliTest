@@ -2,12 +2,17 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -37,15 +42,12 @@ public class Alligator extends Application {
         HBox upperButtons = new HBox(5), adminButtons = new HBox(5), bestButtons = new HBox(5);
 
         //sätter marginaler för den olika raderna av knappar
-        BorderPane.setMargin(upperButtons, new Insets(10, 0, 50, 10));
+        BorderPane.setMargin(upperButtons, new Insets(10, 0, 10, 10));
         BorderPane.setMargin(adminButtons, new Insets(0, 0, 0, 10));
         BorderPane.setMargin(bestButtons, new Insets(0, 0, 0, 10));
 
-
-
         VBox artMeny = createArtMeny();
         VBox laggMeny = createLaggMeny();
-
 
         // bygger de övre knapparna
         Button adminButton = new Button("Admin");
@@ -63,10 +65,16 @@ public class Alligator extends Application {
         Button rappButton = new Button("Rapporter");
         rappButton.setOnAction(e -> setRapp());
 
+        Image image = new Image("logo.jpg");
 
-        //lägger de övre knapparna i horisontell låda
-        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton);
+        // simple displays ImageView the image as is
+        ImageView iv1 = new ImageView();
+        iv1.setImage(image);
 
+
+
+        //lägger de övre knapparna i horisontell låda //inklusive bilden?
+        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton,iv1);
 
         //skapar adminknappar
         Button artButton = new Button("Ny artikel");
@@ -103,8 +111,8 @@ public class Alligator extends Application {
         bp.setTop(upperButtons);
         bp.setCenter(adminButtons);
         bp.setBottom(artMeny);
-        adminScene = new Scene(bp, 1000, 520);
-
+        bp.setStyle("-fx-background-color: #FFFFFF;");
+        adminScene = new Scene(bp, 1000, 520,Color.RED);
         primaryStage.setScene(adminScene);
         primaryStage.show();
 
