@@ -22,7 +22,7 @@ public class AlertBox {
         VBox layout = new VBox(10);
         layout.getChildren().addAll(l,cb);
         layout.setAlignment(Pos.CENTER);
-
+        layout.setStyle("-fx-background-color: #FFFFFF;");
         Scene scene = new Scene(layout);
         window.setScene(scene);
         window.showAndWait();
