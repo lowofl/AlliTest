@@ -2,17 +2,13 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -32,9 +28,52 @@ public class Alligator extends Application {
         launch(args); //startar gui
 
     }
-
     @Override
     public void start(Stage primaryStage){
+        primaryStage.setTitle("Alligator Bioscience");
+        primaryStage.setMinHeight(200);
+        primaryStage.setMinWidth(340);
+        GridPane gp = new GridPane();
+        gp.setHgap(15);
+        gp.setVgap(10);
+
+        TextField anv = new TextField();
+        anv.setEditable(true);
+        gp.add(new Text("Användarnamn: "), 0,0);
+        gp.add(anv,1,0);
+        gp.add(new Text("Lösenord: "),0,1);
+        TextField pw = new TextField();
+        pw.setEditable(true);
+        gp.add(pw,1,1);
+
+        Button logIn = new Button("Logga in");
+        logIn.setOnAction(e->{
+            if(login(anv.getText(),pw.getText())){//TODO Gör med alertbox,sedan gör createUser
+                //lyckad login
+            }else{
+                //misslyckad login
+            }
+        });
+        Scene loginScene = new Scene(gp,240,240);
+        primaryStage.setScene(loginScene);
+        primaryStage.show();
+
+    }
+    private boolean login(String anv, String pw){
+        User user = db.logIn(anv,pw);
+        if(user.equals(null)){
+
+            return false;
+
+        }else{
+            currentUser = user;
+            return true;
+        }
+
+    }
+
+
+    public void loggedIn(Stage primaryStage){
 
         primaryStage.setTitle("Alligator Bioscience");
         primaryStage.setMinHeight(320);
@@ -42,12 +81,15 @@ public class Alligator extends Application {
         HBox upperButtons = new HBox(5), adminButtons = new HBox(5), bestButtons = new HBox(5);
 
         //sätter marginaler för den olika raderna av knappar
-        BorderPane.setMargin(upperButtons, new Insets(10, 0, 10, 10));
+        BorderPane.setMargin(upperButtons, new Insets(10, 0, 50, 10));
         BorderPane.setMargin(adminButtons, new Insets(0, 0, 0, 10));
         BorderPane.setMargin(bestButtons, new Insets(0, 0, 0, 10));
 
+
+
         VBox artMeny = createArtMeny();
         VBox laggMeny = createLaggMeny();
+
 
         // bygger de övre knapparna
         Button adminButton = new Button("Admin");
@@ -63,18 +105,12 @@ public class Alligator extends Application {
             levCB.setItems(db.getLevOptions());
         });
         Button rappButton = new Button("Rapporter");
-        rappButton.setOnAction(e -> setRapp());
-
-        Image image = new Image("logo.jpg");
-
-        // simple displays ImageView the image as is
-        ImageView iv1 = new ImageView();
-        iv1.setImage(image);
+        rappButton.setOnAction(e -> System.out.println("Rapporter"));
 
 
+        //lägger de övre knapparna i horisontell låda
+        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton);
 
-        //lägger de övre knapparna i horisontell låda //inklusive bilden?
-        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton,iv1);
 
         //skapar adminknappar
         Button artButton = new Button("Ny artikel");
@@ -100,6 +136,10 @@ public class Alligator extends Application {
         Button levButton = new Button("Levererade varor");
         levButton.setOnAction(e -> showTable("Ta bort"));
 
+
+        //TODO skapa rapportknappar.
+
+
         //lägger adminknappar i horisontell låda
         adminButtons.getChildren().addAll(artButton);
 
@@ -111,38 +151,19 @@ public class Alligator extends Application {
         bp.setTop(upperButtons);
         bp.setCenter(adminButtons);
         bp.setBottom(artMeny);
-        bp.setStyle("-fx-background-color: #FFFFFF;");
-        adminScene = new Scene(bp, 1000, 520,Color.RED);
+        adminScene = new Scene(bp, 1000, 520);
+
         primaryStage.setScene(adminScene);
         primaryStage.show();
 
 
     }
-
-    private void setRapp(){
-
-        //bp set center sökfunktion?
-        VBox fullSearch = new VBox(5);
-        HBox search = new HBox(10);
-        TextField levVal = new TextField("");
-        levVal.setEditable(true);
-        levVal.setMaxWidth(75);
-        TextField nameVal = new TextField("");
-        nameVal.setEditable(true);
-        nameVal.setMaxWidth(75);
-        TextField nrVal = new TextField("");
-        nrVal.setEditable(true);
-        nrVal.setMaxWidth(75);
-        DatePicker dp = new DatePicker();
-        dp.setMaxWidth(100);
-        DatePicker dtp = new DatePicker();
-        dtp.setMaxWidth(100);
-        Button srch = new Button("Sök"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
-        search.getChildren().addAll(new Text("Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
-        fullSearch.getChildren().addAll(new Text("Sök: "),search);
-        bp.setCenter(fullSearch);
-        showTable("Rapporter");
+    /* kallar create article i databasen */
+    private boolean createArticle(String lev, String name, String nr){
+        return db.createArticle(lev,name,nr);
     }
+
+
     private VBox createArtMeny(){
         VBox artMeny = new VBox(10);
         BorderPane.setMargin(artMeny, new Insets(10, 10, 400, 10));
@@ -163,8 +184,8 @@ public class Alligator extends Application {
         prodNrValArt.getChildren().addAll(new Text("Produktnummer: "), prodNrValArtTx);
 
         Button skapaArt = new Button("Lägg till artikel");
-        skapaArt.setOnAction(e->{ ;
-            if(db.createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
+        skapaArt.setOnAction(e->{
+            if(createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
                 AlertBox.display("Meddelande","Artikel tillagd");
             }
             else{
@@ -190,6 +211,8 @@ public class Alligator extends Application {
 
 
         ObservableList<String> levOptions = db.getLevOptions();
+
+                //TODO 26e kylmeny?, SNYGGARE
         levCB = new ComboBox<>(levOptions);
         levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(levCB.getValue())));
         levCB.setEditable(false);
@@ -331,13 +354,24 @@ public class Alligator extends Application {
             case "Ta bort": /// ta bort??? ska inte ha någon add
                 tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes,col_action);
                 break;
-            case "Rapporter":
-                tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes); //välj vilka som syns?
-                break;
             default:
                 break;
 
+        }/*
+        tab.getColumns().addAll(levCol, nameCol, nrCol, prisCol, projCol,prioCol);
+
+        if(name == "Godkänn"){
+            tab.getColumns().add(chemCol);
         }
+
+        tab.getColumns().addAll(userCol, dateCol);
+        if(name == "Mottagen"){
+            tab.getColumns().add(col_kyl);
+        }else if(name == "Ta bort"){
+            tab.getColumns().add(col_kylRes);
+        }
+
+        tab.getColumns().addAll(col_action); */
         bp.setBottom(tab);
 
     }
@@ -345,19 +379,17 @@ public class Alligator extends Application {
         private ComboBox<String> alts = new ComboBox<>();
         ListCell(){
             ObservableList<String> options = FXCollections.observableArrayList();
-            options.add("RT");
             options.add("Kyl");
             options.add("Frys -20");
             options.add("Frys -80");
             alts.setOnAction(event -> {
-
                 Article temp = data.get(getTableRow().getIndex());
-                db.setKyl(temp.getID(), alts.getValue());
-
+                temp.setKyl(alts.getValue());
+                data.set(getTableRow().getIndex(),temp);
             });
             alts.setItems(options);
             alts.setEditable(false);
-            alts.setValue("RT");
+            alts.setValue("Kyl");
 
         }
         @Override
@@ -377,7 +409,10 @@ public class Alligator extends Application {
                 int i = getTableRow().getIndex();
                 ObservableList<Article> data = getTableView().getItems();
                 Article selArt = data.get(i);
-                db.orderAccepted(selArt.getTable(), selArt.getID()); //kanske också kyl
+                System.out.println(selArt.getLev());
+                System.out.println(selArt.getKyl());
+                db.orderAccepted(name, selArt.getLev(), selArt.getName(), selArt.getNr(), selArt.getPris(), selArt.getProj(), selArt.getPrio(),
+                        selArt.getChemText(), selArt.getUser(), selArt.getDate(), selArt.getOrdered(), selArt.getReceived(), selArt.getKyl());
                 showTable(name);
             });
 

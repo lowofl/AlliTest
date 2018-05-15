@@ -1,4 +1,3 @@
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 public class Article {
@@ -10,34 +9,6 @@ public class Article {
     private SimpleStringProperty chemText = new SimpleStringProperty();
     private SimpleStringProperty date = new SimpleStringProperty();
     private SimpleStringProperty user = new SimpleStringProperty();
-
-    public String getTable() {
-        return table.get();
-    }
-
-    public SimpleStringProperty tableProperty() {
-        return table;
-    }
-
-    public void setTable(String table) {
-        this.table.set(table);
-    }
-
-    private SimpleStringProperty table = new SimpleStringProperty();
-
-    public int getID() {
-        return ID.get();
-    }
-
-    public SimpleIntegerProperty IDProperty() {
-        return ID;
-    }
-
-    public void setID(int ID) {
-        this.ID.set(ID);
-    }
-
-    private SimpleIntegerProperty ID = new SimpleIntegerProperty();
 
     public String getReceived() {
         return received.get();
@@ -93,7 +64,7 @@ public class Article {
         this.kyl.set(kyl);
     }
 
-    private SimpleStringProperty kyl = new SimpleStringProperty("RT");
+    private SimpleStringProperty kyl = new SimpleStringProperty();
 
 
     public void setLev(String lev) {
