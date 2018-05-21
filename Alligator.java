@@ -7,10 +7,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -66,7 +64,8 @@ public class Alligator extends Application {
         gp.add(createUser,0,2);
         gp.add(logIn,1,2);
         gp.setStyle("-fx-background-color: #FFFFFF;");
-        Scene loginScene = new Scene(gp,240,240);
+        Scene loginScene = new Scene(gp,400,240);
+        loginScene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setScene(loginScene);
         primaryStage.show();
 
@@ -148,13 +147,13 @@ public class Alligator extends Application {
             bp.setBottom(laggMeny);
             levCB.setItems(db.getLevOptions());
         });
-        Button nyBestButton = new Button("Nya beställningar");
+        Button nyBestButton = new Button("För attest");
         nyBestButton.setOnAction(e -> showTable("Godkänn"));
-        Button attestButton = new Button("Attesterade beställningar");
+        Button attestButton = new Button("Att beställa");
         attestButton.setOnAction(e -> showTable("Beställd"));
-        Button godkButton = new Button("Lagda beställningar");
+        Button godkButton = new Button("Beställda");
         godkButton.setOnAction(e -> showTable("Mottagen"));
-        Button levButton = new Button("Levererade varor");
+        Button levButton = new Button("Levererade");
         levButton.setOnAction(e -> showTable("Ta bort"));
 
         //lägger adminknappar i horisontell låda
@@ -169,7 +168,9 @@ public class Alligator extends Application {
         bp.setCenter(adminButtons);
         bp.setBottom(artMeny);
         bp.setStyle("-fx-background-color: #FFFFFF;");
-        adminScene = new Scene(bp, 1000, 520);
+
+        adminScene = new Scene(bp, 1080, 620);
+        adminScene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setScene(adminScene);
         primaryStage.show();
 
@@ -193,7 +194,7 @@ public class Alligator extends Application {
         DatePicker dtp = new DatePicker();
         dtp.setMaxWidth(100);
         Button srch = new Button("Filtrera"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
-        
+
         srch.setOnAction(e->{
 
         });
@@ -250,8 +251,6 @@ public class Alligator extends Application {
 
 
         ObservableList<String> levOptions = db.getLevOptions();
-
-                //TODO 26e kylmeny?, SNYGGARE
         levCB = new ComboBox<>(levOptions);
         levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(levCB.getValue())));
         levCB.setEditable(false);
@@ -270,7 +269,7 @@ public class Alligator extends Application {
         HBox prisVal = new HBox(5);
         TextField prisTx = new TextField();
         prisVal.getChildren().addAll(new Text("Cirkapris: "), prisTx);
-        prisTx.setText("0");
+        prisTx.setText("");
 
         HBox projVal = new HBox(5);
         ObservableList<String> projOptions =
@@ -280,6 +279,7 @@ public class Alligator extends Application {
         ComboBox<String> projCB = new ComboBox<>(projOptions);
         projCB.setValue("3000");
         projCB.setEditable(true);
+
         projVal.getChildren().addAll(new Text("Projekt: "), projCB);
 
         HBox prioVal = new HBox(5);
@@ -298,7 +298,16 @@ public class Alligator extends Application {
 
 
         Button skapaBest = new Button("Lägg beställning");
-        skapaBest.setOnAction(e-> confirmOrder(levCB.getValue(), prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getValue(), prioCB.getValue(), chem));
+        skapaBest.setOnAction(e->{
+            confirmOrder(levCB.getValue(), prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getValue(), prioCB.getValue(), chem);
+            levCB.setValue("");
+            prodCB.setValue("");
+            nrTx.setText("");
+            prisTx.setText("");
+            projCB.setValue("3000");
+            prioCB.setValue("");
+            chem.setSelected(false);
+        } );
 
 
 
@@ -358,8 +367,8 @@ public class Alligator extends Application {
      */
     private void showTable(String name){
         TableView<Article> tab = new TableView<>();
-        // TODO tab.setMaxSize(600, 10000);
-        data = db.getTable(name);
+        tab.setMaxHeight(385);
+        data = db.getTable(name); //TODO onödigt att skapa om alla kolumner vid varje kall?
 
         TableColumn<Article,String> levCol = new TableColumn<>("Leverantör");
         levCol.setMinWidth(100);
@@ -367,10 +376,10 @@ public class Alligator extends Application {
         TableColumn<Article,String> projCol = new TableColumn<>("Projekt");
         projCol.setMinWidth(100);
         projCol.setCellValueFactory(new PropertyValueFactory<>("proj"));
-        TableColumn<Article,String> nameCol = new TableColumn<>("Produktnamn");
+        TableColumn<Article,String> nameCol = new TableColumn<>("Namn");
         nameCol.setMinWidth(100);
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        TableColumn<Article,String> nrCol = new TableColumn<>("Produktnummer");
+        TableColumn<Article,String> nrCol = new TableColumn<>("Nummer");
         nrCol.setMinWidth(100);
         nrCol.setCellValueFactory(new PropertyValueFactory<>("nr"));
         TableColumn<Article,String> prioCol = new TableColumn<>("Prioritet");
@@ -427,7 +436,7 @@ public class Alligator extends Application {
                 tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
                 break;
             case "Ta bort": /// ta bort??? ska inte ha någon add
-                tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes,col_action);
+                tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes);
                 break;
             case "Rapporter":
                 tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
