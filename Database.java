@@ -29,7 +29,7 @@ public class Database {
                 + "	pw text NOT NULL,\n"
                 + " admin integer NOT NULL, \n"
                 + " cost integer NOT NULL, \n"
-                + " CONSTRAINT unik_lev UNIQUE(anv)"
+                + " CONSTRAINT unik_anv UNIQUE(anv)"
                 + ");";
 
         //deklarerar levs
@@ -60,11 +60,11 @@ public class Database {
                 + "	proj text,\n"
                 + " prio text, \n"
                 + " chemText text, \n"
-                + " ordered text, \n"
-                + " date text, \n"
+                + " ordered real, \n"
+                + " added real, \n"
                 + " user text NOT NULL, \n"
                 + " kyl text DEFAULT RT, \n"
-                + " mottagen text, \n"
+                + " mottagen real, \n"
                 + " tabell text NOT NULL \n"
                 + ");";
 
@@ -78,6 +78,7 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        createUser("Olof","temp",true,true);
     }
 
     private Connection connect() {
@@ -94,9 +95,7 @@ public class Database {
 
     /* Lägger in en artikel i bests*/
     public void addBest(String lev, String name, String nr, String pris, String proj, String prio, String chem, String user) {
-        String sql = "INSERT INTO orders(lev,name,nr,pris,proj,prio,chemText,date,user,tabell) VALUES(?,?,?,?,?,?,?,?,?,?)";
-        Date d = new Date(System.currentTimeMillis());
-        String date = d.toString();
+        String sql = "INSERT INTO orders(lev,name,nr,pris,proj,prio,chemText,added,user,tabell) VALUES(?,?,?,?,?,?,?,julianday('now')+0.5,?,?)";
         String currTable = "bests";
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -107,33 +106,31 @@ public class Database {
             pstmt.setString(5, proj);
             pstmt.setString(6, prio);
             pstmt.setString(7, chem);
-            pstmt.setString(8, date);
-            pstmt.setString(9, user);
-            pstmt.setString(10,currTable);
+            pstmt.setString(8, user);
+            pstmt.setString(9,currTable);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }
     /* Returnerar data över en tabell i bests */
-    public ObservableList <Article> getTable(String table){
-        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date,ordered,tabell,kyl,mottagen FROM orders WHERE tabell = ";
-        if(table.equals("Godkänn")){
+    public ObservableList <Article> getTable(int i){
+        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen) FROM orders WHERE tabell = ";
+        if(i==0){
             sql += "'bests'";
-        }else if(table.equals("Beställd")){
+        }else if(i==1){
             sql += "'orders'";
-        }else if(table.equals("Mottagen")){
+        }else if(i==2){
             sql += "'deliveries'";
-        }else if(table.equals("Ta bort")){
+        }else if(i==3){
             sql += "'fintable'";
-        }else if(table.equals("Rapporter")){
+        }else if(i==4){
             sql += "'reports'";
         }
         ObservableList <Article> data = FXCollections.observableArrayList();
         try {
             Connection conn = connect();
             ResultSet rs = conn.createStatement().executeQuery(sql);
-
             while (rs.next()) {
                 Article art = new Article();
                 art.setID(rs.getInt("id"));
@@ -145,11 +142,11 @@ public class Database {
                 art.setNr(rs.getString("nr"));
                 art.setPrio(rs.getString("prio"));
                 art.setChemText(rs.getString("chemText"));
-                art.setOrdered(rs.getString("ordered"));
-                art.setDate(rs.getString("date"));
+                art.setOrdered(rs.getString("date(ordered)")); //är de getStrings?
+                art.setDate(rs.getString("date(added)"));
                 art.setKyl(rs.getString("kyl"));
                 art.setTable(rs.getString("tabell"));
-                art.setReceived(rs.getString("mottagen"));
+                art.setReceived(rs.getString("date(mottagen)"));
 
                 data.add(art);
             }
@@ -271,22 +268,20 @@ public class Database {
         }
     }
     private void setMottagen(int id){
-        String sql = "UPDATE orders SET mottagen=? WHERE id=?";
-        Date d = new Date(System.currentTimeMillis());
-        String mottagen = d.toString();
+        String sql = "UPDATE orders SET mottagen=julianday('now')+0.5 WHERE id=?";
         try {
             Connection conn = connect();
             PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1,mottagen);
-            pstmt.setInt(2, id);
+            pstmt.setInt(1, id);
             pstmt.executeUpdate();
         }catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }
     public User logIn(String anv, String pw){
-        User user = null;
-        String anvDb = "", pwDb = "";
+
+        User user = new User("",false,false);
+        String pwDb = "";
         int admin = 0, cost = 0;
         String sql = "SELECT pw,admin,cost FROM users WHERE anv = ?";
 
@@ -303,8 +298,7 @@ public class Database {
 
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            return null; //ingen sådan användare
+            System.out.println(e.getMessage()); //ingen sådan användare
         }
         if(pw.equals(pwDb)){ //lyckad login
             user = new User(anv,cost==1,admin==1);
@@ -329,6 +323,97 @@ public class Database {
         return true;
 
 
+    }
+    public boolean createUser(String anv, String pw, boolean adminB, boolean costB){
+        int admin = 0, cost = 0;
+        if(adminB){
+            admin = 1;
+            cost = 1;
+        }
+        if(costB){
+            cost = 1;
+        }
+
+
+        String sql = "INSERT INTO users(anv,pw,admin,cost) VALUES(?,?,?,?)";
+
+        try (Connection conn = this.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, anv);
+            pstmt.setString(2, pw);
+            pstmt.setInt(3, admin);
+            pstmt.setInt(4, cost);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
+    public boolean deleteUser(String anv, String pw){
+        String sql = "DELETE FROM users WHERE anv=? AND pw=?";
+
+        try (
+
+            Connection conn = this.connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, anv);
+            pstmt.setString(2, pw);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
+    public void clearLev(){
+        String sql = "UPDATE orders SET tabell='reports' WHERE tabell='fintable' AND mottagen+30<julianday('now')+0.5"; //Hårdkodad 30 dagar remove
+
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.executeUpdate();
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    public ObservableList<Article> getSearchData(String lev, String name, String nr, int from, int to){
+        ObservableList<Article> data = FXCollections.observableArrayList();
+        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen) FROM orders WHERE tabell = 'reports'"
+                + " AND lev LIKE ? AND name LIKE ? AND nr LIKE ? AND added-2458261+17673 > ? AND added-2458261+17673 < ?;"; //2458261+17673
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,"%" +lev+"%");
+            pstmt.setString(2, "%" +name+"%");
+            pstmt.setString(3, "%" +nr+"%");
+            pstmt.setInt(4, from);
+            pstmt.setInt(5, to);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Article art = new Article();
+                art.setID(rs.getInt("id"));
+                art.setLev(rs.getString("lev"));
+                art.setName(rs.getString("name"));
+                art.setPris(rs.getString("pris"));
+                art.setUser(rs.getString("user"));
+                art.setProj(rs.getString("proj"));
+                art.setNr(rs.getString("nr"));
+                art.setPrio(rs.getString("prio"));
+                art.setChemText(rs.getString("chemText"));
+                art.setOrdered(rs.getString("date(ordered)")); //är de getStrings?
+                art.setDate(rs.getString("date(added)"));
+                art.setKyl(rs.getString("kyl"));
+                art.setTable(rs.getString("tabell"));
+                art.setReceived(rs.getString("date(mottagen)"));
+
+                data.add(art);
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return data;
     }
 }
 

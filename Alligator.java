@@ -1,16 +1,22 @@
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 
 public class Alligator extends Application {
@@ -20,7 +26,7 @@ public class Alligator extends Application {
     private ComboBox<String> levCB, levArtCB, taBortLevCB;
     private BorderPane bp;
     private Database db = new Database("database.db");
-    private User currentUser = new User("Olof", true,true);
+    private User currentUser;
 
     public static void main(String args[]) {
 
@@ -30,6 +36,9 @@ public class Alligator extends Application {
     }
     @Override
     public void start(Stage primaryStage){
+
+        //lägg över från lev till rapp
+        db.clearLev();
         primaryStage.setTitle("Alligator Bioscience");
         primaryStage.setMinHeight(200);
         primaryStage.setMinWidth(340);
@@ -48,7 +57,7 @@ public class Alligator extends Application {
 
         Button logIn = new Button("Logga in");
         logIn.setOnAction(e->{
-            if(true){//login(anv.getText(),pw.getText())){
+            if(login(anv.getText(),pw.getText())){
                 //lyckad login
                 primaryStage.hide();
                 loggedIn(new Stage());
@@ -57,22 +66,24 @@ public class Alligator extends Application {
                 AlertBox.display("Meddelande","Inloggning misslyckad");
             }
         });
-        Button createUser = new Button("Ny användare");
-        createUser.setOnAction(e->{
-            //TODO ny användare????
-        });
-        gp.add(createUser,0,2);
         gp.add(logIn,1,2);
         gp.setStyle("-fx-background-color: #FFFFFF;");
         Scene loginScene = new Scene(gp,400,240);
         loginScene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+        loginScene.setOnKeyPressed(event -> {
+            if(event.getCode() == KeyCode.ENTER) {
+                logIn.fire();
+                event.consume();
+            }
+        });
         primaryStage.setScene(loginScene);
         primaryStage.show();
 
     }
+
     private boolean login(String anv, String pw){
         User user = db.logIn(anv,pw);
-        if(user.equals(null)){
+        if(user.getName().equals("")){
             return false;
         }else{
             currentUser = user;
@@ -80,29 +91,30 @@ public class Alligator extends Application {
         }
 
     }
-
-
     public void loggedIn(Stage primaryStage){
 
         primaryStage.setTitle("Alligator Bioscience");
         primaryStage.setMinHeight(320);
         primaryStage.setMinWidth(400);
-        HBox upperButtons = new HBox(5), adminButtons = new HBox(5), bestButtons = new HBox(5);
+        HBox upperButtons = new HBox(5), adminButtons = new HBox(5), bestButtons = new HBox(5), anvButtons = new HBox(5);
 
         //sätter marginaler för den olika raderna av knappar
         BorderPane.setMargin(upperButtons, new Insets(10, 0, 10, 10));
         BorderPane.setMargin(adminButtons, new Insets(0, 0, 0, 10));
         BorderPane.setMargin(bestButtons, new Insets(0, 0, 0, 10));
+        BorderPane.setMargin(anvButtons, new Insets(0, 0, 0, 10));
 
 
 
         VBox artMeny = createArtMeny();
         VBox laggMeny = createLaggMeny();
         VBox taBortMeny = createTaBortMeny();
+        VBox taBortAnvMeny = createTaBortAnvMeny();
+        VBox addAnvMeny = createAddAnvMeny();
 
 
         // bygger de övre knapparna
-        Button adminButton = new Button("Admin");
+        Button adminButton = new Button("Artiklar");
         adminButton.setOnAction(e -> {
             bp.setCenter(adminButtons);
             bp.setBottom(artMeny);
@@ -117,13 +129,19 @@ public class Alligator extends Application {
         Button rappButton = new Button("Rapporter");
         rappButton.setOnAction(e -> setRapp());
 
-        Image image = new Image("logo.jpg");
+        Button persButton = new Button("Personal"); //TODO logga ut?
+        persButton.setOnAction(e -> {
+            bp.setCenter(anvButtons);
+            bp.setBottom(addAnvMeny);
+        });
+
+        Image image = new Image("logo.png");
         ImageView iv1 = new ImageView();
         iv1.setImage(image);
 
 
         //lägger de övre knapparna i horisontell låda //och bild?
-        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton,iv1);
+        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton, persButton,iv1);
 
 
         //skapar adminknappar
@@ -140,6 +158,19 @@ public class Alligator extends Application {
         });
 
 
+        //skapar knappar för användarhantering
+
+        Button taBortAnvButton = new Button("Ta bort användare");
+        taBortAnvButton.setOnAction(e -> {
+            bp.setBottom(taBortAnvMeny);
+        });
+
+        Button addAnvButton = new Button("Lägg till användare");
+        addAnvButton.setOnAction(e -> {
+            bp.setBottom(addAnvMeny);
+        });
+
+        anvButtons.getChildren().addAll(addAnvButton,taBortAnvButton);
 
         //skapar beställningsknappar
         Button laggBest = new Button("Lägg ny beställning");
@@ -148,13 +179,13 @@ public class Alligator extends Application {
             levCB.setItems(db.getLevOptions());
         });
         Button nyBestButton = new Button("För attest");
-        nyBestButton.setOnAction(e -> showTable("Godkänn"));
+        nyBestButton.setOnAction(e -> showTable(0,null));
         Button attestButton = new Button("Att beställa");
-        attestButton.setOnAction(e -> showTable("Beställd"));
+        attestButton.setOnAction(e -> showTable(1,null));
         Button godkButton = new Button("Beställda");
-        godkButton.setOnAction(e -> showTable("Mottagen"));
+        godkButton.setOnAction(e -> showTable(2,null));
         Button levButton = new Button("Levererade");
-        levButton.setOnAction(e -> showTable("Ta bort"));
+        levButton.setOnAction(e -> showTable(3,null));
 
         //lägger adminknappar i horisontell låda
         adminButtons.getChildren().addAll(artButton,taBortArtButton);
@@ -162,21 +193,19 @@ public class Alligator extends Application {
         //lägger beställningsknappar i horisontell låda
         bestButtons.getChildren().addAll(laggBest, nyBestButton, attestButton, godkButton, levButton);
 
-
         bp = new BorderPane();
         bp.setTop(upperButtons);
         bp.setCenter(adminButtons);
         bp.setBottom(artMeny);
         bp.setStyle("-fx-background-color: #FFFFFF;");
 
-        adminScene = new Scene(bp, 1080, 620);
+        adminScene = new Scene(bp, 1180, 620);
         adminScene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setScene(adminScene);
         primaryStage.show();
 
 
     }
-
     private void setRapp(){
         VBox fullSearch = new VBox(5); //bp set center sökfunktion??
         HBox search = new HBox(10);
@@ -189,21 +218,35 @@ public class Alligator extends Application {
         TextField nrVal = new TextField("");
         nrVal.setEditable(true);
         nrVal.setMaxWidth(75);
-        DatePicker dp = new DatePicker();
+        DatePicker dp = new DatePicker();//från
         dp.setMaxWidth(100);
-        DatePicker dtp = new DatePicker();
+        DatePicker dtp = new DatePicker();//till
         dtp.setMaxWidth(100);
-        Button srch = new Button("Filtrera"); //TODO implementera denna knappen, senare--, logga, text,login,snyggare(?), nåt mer?
+        Button srch = new Button("Filtrera");
+        LocalDate now = LocalDate.now();
+        LocalDate epoch = LocalDate.ofEpochDay(0);
 
         srch.setOnAction(e->{
 
+            int from = (int)ChronoUnit.DAYS.between(epoch, now)-30, to = (int) ChronoUnit.DAYS.between(epoch, now);
+            try{
+                from = (int)dp.getValue().toEpochDay();
+                to = (int)dtp.getValue().toEpochDay();
+            }catch(NullPointerException ex){
+                System.out.println(ex.getMessage());
+            }
+
+            ObservableList<Article> data = db.getSearchData(levVal.getText(),nameVal.getText(),nrVal.getText(),from,to);
+
+            showTable(4, data);
         });
         search.getChildren().addAll(new Text("  Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
         fullSearch.getChildren().addAll(new Text("  Filtrera: "),search);
         bp.setCenter(fullSearch);
-        showTable("Rapporter");
+        int from = (int)ChronoUnit.DAYS.between(epoch, now)-30, to = (int) ChronoUnit.DAYS.between(epoch, now);
+        ObservableList<Article> data = db.getSearchData("","","",from,to);
+        showTable(4,data);
     }
-
     private VBox createArtMeny(){
         VBox artMeny = new VBox(10);
         BorderPane.setMargin(artMeny, new Insets(10, 10, 400, 10));
@@ -293,8 +336,11 @@ public class Alligator extends Application {
         prioCB.setValue("Normal");
         prioCB.setEditable(false);
         prioVal.getChildren().addAll(new Text("Prioritet: "), prioCB);
+        HBox chemVal = new HBox(5);
+        CheckBox chem = new CheckBox();
+        chemVal.getChildren().addAll(new Text("Ny kemikalie"), chem);
 
-        CheckBox chem = new CheckBox("Ny kemikalie");
+
 
 
         Button skapaBest = new Button("Lägg beställning");
@@ -311,7 +357,7 @@ public class Alligator extends Application {
 
 
 
-        laggMeny.getChildren().addAll(levVal, prodVal, nrVal, prisVal, projVal, prioVal, chem, skapaBest);
+        laggMeny.getChildren().addAll(levVal, prodVal, nrVal, prisVal, projVal, prioVal, chemVal, skapaBest);
         return laggMeny;
     }
     private VBox createTaBortMeny(){
@@ -352,6 +398,80 @@ public class Alligator extends Application {
         taBortMeny.getChildren().addAll(levValArt,prodVal,nrVal,taBortArt);
         return taBortMeny;
     }
+    private VBox createAddAnvMeny(){
+        VBox anvMeny = new VBox(10);
+        BorderPane.setMargin(anvMeny, new Insets(10, 10, 400, 10));
+
+        HBox anvVal = new HBox(5);
+        TextField anvValTx = new TextField("");
+        anvValTx.setEditable(true);
+        anvVal.getChildren().addAll(new Text("Användarnamn: "), anvValTx);
+
+        HBox pwVal = new HBox(5);
+        TextField pwValTx = new TextField("");
+        pwValTx.setEditable(true);
+        pwVal.getChildren().addAll(new Text("Lösenord: "), pwValTx);
+
+
+        HBox adminVal = new HBox(5);
+        CheckBox admin = new CheckBox();
+        adminVal.getChildren().addAll(new Text("Adminrätt"), admin);
+        HBox costVal = new HBox(5);
+        CheckBox cost = new CheckBox();
+        costVal.getChildren().addAll(new Text("Beställrätt"),cost);
+
+
+
+
+
+        Button skapaAnv = new Button("Lägg till användare");
+        skapaAnv.setOnAction(e->{
+            if(db.createUser(anvValTx.getText(),pwValTx.getText(),admin.isSelected(),cost.isSelected())){
+                AlertBox.display("Meddelande","Användare tillagd");
+                anvValTx.setText("");
+                pwValTx.setText("");
+                admin.setSelected(false);
+                cost.setSelected(false);
+            }
+            else{
+                AlertBox.display("Meddelande","Användarnamn upptaget");
+            }
+
+        });
+        anvMeny.getChildren().addAll(anvVal,pwVal,adminVal,costVal,skapaAnv);
+        return anvMeny;
+    }
+    private VBox createTaBortAnvMeny(){
+        VBox anvMeny = new VBox(10);
+        BorderPane.setMargin(anvMeny, new Insets(10, 10, 400, 10));
+
+        HBox anvVal = new HBox(5);
+        TextField anvValTx = new TextField("");
+        anvValTx.setEditable(true);
+        anvVal.getChildren().addAll(new Text("Användarnamn: "), anvValTx);
+
+        HBox pwVal = new HBox(5);
+        TextField pwValTx = new TextField("");
+        pwValTx.setEditable(true);
+        pwVal.getChildren().addAll(new Text("Lösenord: "), pwValTx);
+
+
+        Button skapaAnv = new Button("Ta bort användare");
+        skapaAnv.setOnAction(e->{
+            if(db.deleteUser(anvValTx.getText(),pwValTx.getText())){
+                AlertBox.display("Meddelande","Användare borttagen"); //TODO fråga om lov?
+                anvValTx.setText("");
+                pwValTx.setText("");
+            }
+            else{
+                AlertBox.display("Meddelande","Ett fel uppstod. \n Användaren fanns inte. ");
+            }
+
+        });
+
+        anvMeny.getChildren().addAll(anvVal,pwVal,skapaAnv);
+        return anvMeny;
+    }
     private void confirmOrder(String lev, String prod, String nr, String pris, String proj, String prio, CheckBox chem){
         String chemText = " ";
         if(chem.isSelected()){
@@ -359,16 +479,14 @@ public class Alligator extends Application {
         }
         db.addBest(lev,prod,nr,pris,proj,prio,chemText,currentUser.getName()); //läggbest
     }
+    private void showTable(int i, ObservableList<Article> dataI){
 
-
-    /*
-    Hämtar data ifrån databasen. Skapar sedan kolumner för tabellen och gör en tabell.
-    Utnyttjar klassen buttoncell för knapparna i tabellen.
-     */
-    private void showTable(String name){
+        /*
+        Hämtar data ifrån databasen. Skapar sedan kolumner för tabellen och gör en tabell.
+        Utnyttjar klassen buttoncell för knapparna i tabellen.
+        */
         TableView<Article> tab = new TableView<>();
         tab.setMaxHeight(385);
-        data = db.getTable(name); //TODO onödigt att skapa om alla kolumner vid varje kall?
 
         TableColumn<Article,String> levCol = new TableColumn<>("Leverantör");
         levCol.setMinWidth(100);
@@ -418,33 +536,28 @@ public class Alligator extends Application {
         TableColumn col_action = new TableColumn<>("Action");
         col_action.setMinWidth(100);
         col_action.setSortable(false);
-        col_action.setCellFactory(e-> new ButtonCell(name));
+        col_action.setCellFactory(e-> new ButtonCell(i));
 
+        if(i==0){
+            tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol, col_action);
+        }else if(i==1){
+            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_action);
+        }else if(i==2){
+            tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
+        }else if(i==3){
+            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes,col_action);
+        }else if(i==4){
+            tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
+        }
+
+        if(dataI == null){
+            data = db.getTable(i);
+
+        }else{
+            data = dataI;
+        }
 
         tab.setItems(data);
-
-        //case system istället.
-
-        switch(name){
-            case "Godkänn":
-                tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol, col_action);
-                break;
-            case "Beställd":
-                tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_action);
-                break;
-            case "Mottagen":
-                tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
-                break;
-            case "Ta bort": /// ta bort??? ska inte ha någon add
-                tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes);
-                break;
-            case "Rapporter":
-                tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
-                break;
-            default:
-                break;
-
-        }
         bp.setBottom(tab);
 
     }
@@ -475,15 +588,22 @@ public class Alligator extends Application {
     }
     private class ButtonCell extends TableCell<Article, Boolean> {
         final Button cellButton = new Button();
-        ButtonCell(String name){
-
+        ButtonCell(int a){
+            String name = "";
+            if(a==0){
+                name = "Godkänn";
+            }else if(a==1){
+                name = "Beställd";
+            }else if(a==2){
+                name = "Levererad";
+            }
             cellButton.setText(name);
             cellButton.setOnAction(e->{
                 int i = getTableRow().getIndex();
                 ObservableList<Article> data = getTableView().getItems();
                 Article selArt = data.get(i);
                 db.orderAccepted(selArt.getTable(), selArt.getID()); //kanske också kyl
-                showTable(name);
+                showTable(a,null);
             });
 
         }
