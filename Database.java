@@ -1,5 +1,6 @@
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Separator;
 
 import java.sql.*;
 
@@ -36,6 +37,7 @@ public class Database {
         String levs = "CREATE TABLE IF NOT EXISTS levs(\n"
                 + "	id integer PRIMARY KEY,\n"
                 + "	lev text NOT NULL,\n"
+                + " arts integer DEFAULT 0, \n"
                 + " CONSTRAINT unik_lev UNIQUE(lev)"
                 + ");";
 
@@ -46,6 +48,7 @@ public class Database {
                 + "	lev text NOT NULL,\n"
                 + " name text NOT NULL, \n"
                 + " nr text NOT NULL, \n"
+                + " uses integer DEFAULT 0, \n"
                 + " CONSTRAINT unik_lev_och_nr UNIQUE(lev,nr)"
                 + ");";
 
@@ -80,7 +83,6 @@ public class Database {
         }
         createUser("Olof","temp",true,true);
     }
-
     private Connection connect() {
         // SQLite connection string
         Connection conn = null;
@@ -112,6 +114,20 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        sql = "UPDATE articles SET uses = uses + 1 WHERE lev = ? AND name = ? AND nr = ?";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, lev);
+            pstmt.setString(2, name);
+            pstmt.setString(3, nr);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+
+
     }
     /* Returnerar data över en tabell i bests */
     public ObservableList <Article> getTable(int i){
@@ -155,9 +171,9 @@ public class Database {
         }
         return data;
     }
-    public ObservableList<String> getLevOptions(){
-        ObservableList <String> levs = FXCollections.observableArrayList();
-        String sql = "SELECT lev FROM levs";
+    public ObservableList<Object> getLevOnly(){
+        ObservableList <Object> levs = FXCollections.observableArrayList();
+        String sql = "SELECT lev FROM levs WHERE arts>0 ORDER BY lev ASC";
         try {
             Connection conn = connect();
 
@@ -168,12 +184,31 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-
         return levs;
     }
-    public ObservableList<String> getProdOptions(String lev){
-        ObservableList <String> prods = FXCollections.observableArrayList();
-        String sql = "SELECT name FROM articles WHERE lev = ?";
+    public ObservableList<Object> getLevOptions(){
+        ObservableList<Object> top5 = FXCollections.observableArrayList();
+        ObservableList<Object> levs = getLevOnly();
+        String sql = "SELECT lev FROM levs WHERE arts>0 ORDER BY arts DESC";
+        try {
+            Connection conn = connect();
+
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            while (rs.next()) {
+                top5.add(rs.getString("lev"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        top5.remove(4,top5.size()-1);
+        top5.add(new Separator());
+        top5.addAll(levs);
+        return top5;
+    }
+    public ObservableList<Object> getProdOnly(String lev){
+        //onödigt? Men liknande lösning som getLevOnly
+        ObservableList <Object> prods = FXCollections.observableArrayList();
+        String sql = "SELECT name FROM articles WHERE lev = ? ORDER BY name ASC";
         try {
             Connection conn = connect();
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -186,8 +221,28 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-
         return prods;
+    }
+    public ObservableList<Object> getProdOptions(String lev){
+        String sql = "SELECT name FROM articles WHERE lev = ? ORDER BY uses DESC";
+        ObservableList<Object> top5 = FXCollections.observableArrayList();
+        ObservableList<Object> prods = getProdOnly(lev);
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, lev);
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                top5.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        top5.remove(4,top5.size()-1);
+        top5.add(new Separator());
+        top5.addAll(prods);
+        return top5;
     }
     public String getProdNr(String lev, String name){
         String nr = "";
@@ -222,6 +277,15 @@ public class Database {
             return false;
         }
         sql = "INSERT INTO levs(lev) VALUES(?)";
+        try (Connection conn = this.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, lev);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        sql = "UPDATE levs SET arts = arts + 1 WHERE lev=?";
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, lev);
@@ -301,7 +365,7 @@ public class Database {
             System.out.println(e.getMessage()); //ingen sådan användare
         }
         if(pw.equals(pwDb)){ //lyckad login
-            user = new User(anv,cost==1,admin==1);
+            user = new User(anv,admin==1,cost==1);
         }
 
         return user;
@@ -319,7 +383,18 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
             return false;
-        } // TODO om det var sista artikeln från en leverantör, ta bort leverantören?
+        }
+
+        sql = "UPDATE levs SET arts = arts-1 WHERE lev=?";
+
+        try (Connection conn = this.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, lev);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
         return true;
 
 
@@ -415,5 +490,6 @@ public class Database {
         }
         return data;
     }
+
 }
 

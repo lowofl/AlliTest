@@ -1,7 +1,6 @@
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -9,9 +8,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -23,8 +20,8 @@ public class Alligator extends Application {
 
     private ObservableList<Article> data;
     private Scene adminScene;
-    private ComboBox<String> levCB, levArtCB, taBortLevCB;
     private BorderPane bp;
+    private ChoiceBox levCB;
     private Database db = new Database("database.db");
     private User currentUser;
 
@@ -91,7 +88,7 @@ public class Alligator extends Application {
         }
 
     }
-    public void loggedIn(Stage primaryStage){
+    private void loggedIn(Stage primaryStage){
 
         primaryStage.setTitle("Alligator Bioscience");
         primaryStage.setMinHeight(320);
@@ -118,18 +115,16 @@ public class Alligator extends Application {
         adminButton.setOnAction(e -> {
             bp.setCenter(adminButtons);
             bp.setBottom(artMeny);
-            levCB.setItems(db.getLevOptions());
         });
         Button bestButton = new Button("Beställningar");
         bestButton.setOnAction(e -> {
             bp.setCenter(bestButtons);
             bp.setBottom(laggMeny);
-            levCB.setItems(db.getLevOptions());
         });
         Button rappButton = new Button("Rapporter");
         rappButton.setOnAction(e -> setRapp());
 
-        Button persButton = new Button("Personal"); //TODO logga ut?
+        Button persButton = new Button("Personal"); //TODO logga ut, samt sätt textlådorna ovanpå varandra
         persButton.setOnAction(e -> {
             bp.setCenter(anvButtons);
             bp.setBottom(addAnvMeny);
@@ -146,38 +141,25 @@ public class Alligator extends Application {
 
         //skapar adminknappar
         Button artButton = new Button("Ny artikel");
-        artButton.setOnAction(e -> {
-            bp.setBottom(artMeny);
-            levArtCB.setItems(db.getLevOptions());
-        });
+        artButton.setOnAction(e -> bp.setBottom(artMeny));
 
         Button taBortArtButton = new Button("Ta bort artikel");
-        taBortArtButton.setOnAction(e -> {
-            bp.setBottom(taBortMeny);
-            taBortLevCB.setItems(db.getLevOptions());
-        });
+        taBortArtButton.setOnAction(e -> bp.setBottom(taBortMeny));
 
 
         //skapar knappar för användarhantering
 
         Button taBortAnvButton = new Button("Ta bort användare");
-        taBortAnvButton.setOnAction(e -> {
-            bp.setBottom(taBortAnvMeny);
-        });
+        taBortAnvButton.setOnAction(e -> bp.setBottom(taBortAnvMeny));
 
         Button addAnvButton = new Button("Lägg till användare");
-        addAnvButton.setOnAction(e -> {
-            bp.setBottom(addAnvMeny);
-        });
+        addAnvButton.setOnAction(e -> bp.setBottom(addAnvMeny));
 
         anvButtons.getChildren().addAll(addAnvButton,taBortAnvButton);
 
         //skapar beställningsknappar
         Button laggBest = new Button("Lägg ny beställning");
-        laggBest.setOnAction(e -> {
-            bp.setBottom(laggMeny);
-            levCB.setItems(db.getLevOptions());
-        });
+        laggBest.setOnAction(e -> bp.setBottom(laggMeny));
         Button nyBestButton = new Button("För attest");
         nyBestButton.setOnAction(e -> showTable(0,null));
         Button attestButton = new Button("Att beställa");
@@ -251,15 +233,15 @@ public class Alligator extends Application {
         VBox artMeny = new VBox(10);
         BorderPane.setMargin(artMeny, new Insets(10, 10, 400, 10));
         HBox levValArt = new HBox(5);
-        ObservableList<String> levArtOptions = db.getLevOptions();
-        levArtCB = new ComboBox<>(levArtOptions);
-        levArtCB.setEditable(true);
-        levValArt.getChildren().addAll(new Text("Leverantör: "), levArtCB);
+        ObservableList<Object> levArtOptions = db.getLevOptions();
+        ComboBox<Object> levCombo = new ComboBox<>(levArtOptions);
+        levCombo.setEditable(true);
+        levValArt.getChildren().addAll(new Text("Leverantör: "), levCombo);
 
         HBox prodValArt = new HBox(5);
         TextField prodValArtTx = new TextField("");
         prodValArtTx.setEditable(true);
-        prodValArt.getChildren().addAll(new Text("Produktnamn: "), prodValArtTx);
+        prodValArt.getChildren().addAll(new Text("Produkt: "), prodValArtTx);
 
         HBox prodNrValArt = new HBox(5);
         TextField prodNrValArtTx = new TextField("");
@@ -268,15 +250,16 @@ public class Alligator extends Application {
 
         Button skapaArt = new Button("Lägg till artikel");
         skapaArt.setOnAction(e->{
-            if(db.createArticle(levArtCB.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
+            if(db.createArticle((String)levCombo.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
                 AlertBox.display("Meddelande","Artikel tillagd");
             }
             else{
                 AlertBox.display("Meddelande","Artikel kunde inte läggas till");
             }
 
-            levArtCB.setItems(db.getLevOptions());
-            levArtCB.setValue("");
+            levCB.setItems(db.getLevOptions());
+            levCombo.setItems(db.getLevOptions());
+            levCombo.setValue("");
             prodValArtTx.setText("");
             prodNrValArtTx.setText("");
 
@@ -287,27 +270,25 @@ public class Alligator extends Application {
     }
     private VBox createLaggMeny(){
         VBox laggMeny = new VBox(10);
-        ComboBox<String> prodCB = new ComboBox<>(db.getProdOptions(""));
-
+        ChoiceBox<Object> prodCB = new ChoiceBox<>();
         BorderPane.setMargin(laggMeny, new Insets(10, 10, 400, 10));
         HBox levVal = new HBox(5);
+        ObservableList<Object> levOptions = db.getLevOptions();
+        levCB = new ChoiceBox<>(levOptions);
+        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levCB.getValue())));
 
-
-        ObservableList<String> levOptions = db.getLevOptions();
-        levCB = new ComboBox<>(levOptions);
-        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(levCB.getValue())));
-        levCB.setEditable(false);
         levVal.getChildren().addAll(new Text("Leverantör: "), levCB);
 
         HBox prodVal = new HBox(5);
-
-        prodCB.setEditable(false);
         prodVal.getChildren().addAll(new Text("Produkt: "), prodCB);
         HBox nrVal = new HBox(5);
         TextField nrTx = new TextField();
         nrTx.setEditable(false);
         nrVal.getChildren().addAll(new Text("Produktnummer: "), nrTx);
-        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr(levCB.getValue(),prodCB.getValue())));
+        prodCB.setOnAction(e-> {
+            db.getProdNr((String) levCB.getValue(), (String) prodCB.getValue());
+            nrTx.setText(db.getProdNr((String) levCB.getValue(), (String) prodCB.getValue()));
+        });
 
         HBox prisVal = new HBox(5);
         TextField prisTx = new TextField();
@@ -344,14 +325,14 @@ public class Alligator extends Application {
 
 
         Button skapaBest = new Button("Lägg beställning");
-        skapaBest.setOnAction(e->{
-            confirmOrder(levCB.getValue(), prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getValue(), prioCB.getValue(), chem);
-            levCB.setValue("");
-            prodCB.setValue("");
-            nrTx.setText("");
-            prisTx.setText("");
+        skapaBest.setOnAction(e ->{
+            confirmOrder((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getValue(), prioCB.getValue(), chem);
+            levCB.setValue(" ");
+            prodCB.setValue(" ");
+            nrTx.setText(" ");
+            prisTx.setText(" ");
             projCB.setValue("3000");
-            prioCB.setValue("");
+            prioCB.setValue("Normal");
             chem.setSelected(false);
         } );
 
@@ -364,28 +345,26 @@ public class Alligator extends Application {
         VBox taBortMeny = new VBox(10);
         BorderPane.setMargin(taBortMeny, new Insets(10, 10, 400, 10));
         HBox levValArt = new HBox(5);
-        ObservableList<String> levArtOptions = db.getLevOptions();
-        taBortLevCB = new ComboBox<>(levArtOptions);
-        taBortLevCB.setEditable(false);
-        levValArt.getChildren().addAll(new Text("Leverantör: "), taBortLevCB);
+        ObservableList<Object> levArtOptions = db.getLevOptions();
+        ChoiceBox<Object> levCB = new ChoiceBox<>(levArtOptions);
+        levValArt.getChildren().addAll(new Text("Leverantör: "), levCB);
 
         HBox prodVal = new HBox(5);
-        ComboBox<String> prodCB = new ComboBox<>(db.getProdOptions(""));
-        prodCB.setEditable(false);
-        taBortLevCB.setOnAction(e-> prodCB.setItems(db.getProdOptions(taBortLevCB.getValue())));
+        ChoiceBox<Object> prodCB = new ChoiceBox<>();
+        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levCB.getValue())));
         prodVal.getChildren().addAll(new Text("Produkt: "), prodCB);
         HBox nrVal = new HBox(5);
         TextField nrTx = new TextField();
         nrTx.setEditable(false);
         nrVal.getChildren().addAll(new Text("Produktnummer: "), nrTx);
-        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr(taBortLevCB.getValue(),prodCB.getValue())));
+        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr((String)levCB.getValue(),(String)prodCB.getValue())));
 
         Button taBortArt = new Button("Ta bort artikel");
         taBortArt.setOnAction(e->{
-            if(db.removeArticle(taBortLevCB.getValue(), prodCB.getValue(), nrTx.getText() )){
+            if(db.removeArticle((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText() )){
                 AlertBox.display("Meddelande","Artikel borttagen");
-                taBortLevCB.setItems(db.getLevOptions());
-                taBortLevCB.setValue("");
+                levCB.setItems(db.getLevOptions());
+                levCB.setValue("");
                 prodCB.setValue("");
                 nrTx.setText("");
             }
@@ -426,16 +405,24 @@ public class Alligator extends Application {
 
         Button skapaAnv = new Button("Lägg till användare");
         skapaAnv.setOnAction(e->{
-            if(db.createUser(anvValTx.getText(),pwValTx.getText(),admin.isSelected(),cost.isSelected())){
-                AlertBox.display("Meddelande","Användare tillagd");
-                anvValTx.setText("");
-                pwValTx.setText("");
-                admin.setSelected(false);
-                cost.setSelected(false);
+            if(!currentUser.isOrderAdmin()){
+                AlertBox.display("Meddelande","Adminrätt krävs för denna åtgärd. ");
+            }else{
+                if((admin.isSelected() || cost.isSelected()) && !currentUser.isFullAdmin()){
+                    AlertBox.display("Meddelande","Adminrätt krävs för denna åtgärd. ");
+                }else if(db.createUser(anvValTx.getText(),pwValTx.getText(),admin.isSelected(),cost.isSelected())){
+                    AlertBox.display("Meddelande","Användare tillagd");
+                    anvValTx.setText("");
+                    pwValTx.setText("");
+                    admin.setSelected(false);
+                    cost.setSelected(false);
+                }
+                else{
+                    AlertBox.display("Meddelande","Användarnamn upptaget");
+                }
             }
-            else{
-                AlertBox.display("Meddelande","Användarnamn upptaget");
-            }
+
+
 
         });
         anvMeny.getChildren().addAll(anvVal,pwVal,adminVal,costVal,skapaAnv);
@@ -458,8 +445,10 @@ public class Alligator extends Application {
 
         Button skapaAnv = new Button("Ta bort användare");
         skapaAnv.setOnAction(e->{
-            if(db.deleteUser(anvValTx.getText(),pwValTx.getText())){
-                AlertBox.display("Meddelande","Användare borttagen"); //TODO fråga om lov?
+            if(!currentUser.isFullAdmin()){
+                AlertBox.display("Meddelande","Adminrätt krävs för denna åtgärd. ");
+            }else if(db.deleteUser(anvValTx.getText(),pwValTx.getText())){
+                AlertBox.display("Meddelande","Användare borttagen");
                 anvValTx.setText("");
                 pwValTx.setText("");
             }
@@ -486,7 +475,7 @@ public class Alligator extends Application {
         Utnyttjar klassen buttoncell för knapparna i tabellen.
         */
         TableView<Article> tab = new TableView<>();
-        tab.setMaxHeight(385);
+        tab.setMaxHeight(385); //TODO fixa proper height för tabell??? eventuellt i insets
 
         TableColumn<Article,String> levCol = new TableColumn<>("Leverantör");
         levCol.setMinWidth(100);
@@ -539,13 +528,19 @@ public class Alligator extends Application {
         col_action.setCellFactory(e-> new ButtonCell(i));
 
         if(i==0){
-            tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol, col_action);
+            tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol);
+            if(currentUser.isFullAdmin()) {
+                tab.getColumns().add(col_action);
+            }
         }else if(i==1){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_action);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol);
+            if(currentUser.isOrderAdmin()) {
+                tab.getColumns().add(col_action);
+            }
         }else if(i==2){
             tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
         }else if(i==3){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes,col_action);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes);
         }else if(i==4){
             tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
         }
