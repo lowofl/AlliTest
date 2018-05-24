@@ -202,6 +202,9 @@ public class Database {
         }
         top5.remove(4,top5.size()-1);
         top5.add(new Separator());
+        top5.add(new Separator());
+        top5.add(new Separator());
+        top5.add(new Separator());
         top5.addAll(levs);
         return top5;
     }
