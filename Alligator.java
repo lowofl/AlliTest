@@ -19,12 +19,11 @@ import java.time.temporal.ChronoUnit;
 public class Alligator extends Application {
 
     private ObservableList<Article> data;
-    private Scene adminScene;
     private BorderPane bp;
     private ChoiceBox levCB;
     private Database db = new Database("database.db");
     private User currentUser;
-    private HBox upperButtons = new HBox(5), adminButtons = new HBox(5), bestButtons = new HBox(5), anvButtons = new HBox(5);
+    private HBox upperButtons, adminButtons, bestButtons, anvButtons;
     private VBox fullSearch;
     public static void main(String args[]) {
 
@@ -78,7 +77,6 @@ public class Alligator extends Application {
         primaryStage.show();
 
     }
-
     private boolean login(String anv, String pw){
         User user = db.logIn(anv,pw);
         if(user.getName().equals("")){
@@ -90,10 +88,13 @@ public class Alligator extends Application {
 
     }
     private void loggedIn(Stage primaryStage){
-
+        upperButtons = new HBox(5);
+        adminButtons = new HBox(5);
+        bestButtons = new HBox(5);
+        anvButtons = new HBox(5);
         primaryStage.setTitle("Alligator Bioscience");
-        primaryStage.setMinHeight(320);
-        primaryStage.setMinWidth(400);
+        primaryStage.setMinHeight(600);
+        primaryStage.setMinWidth(1200);
 
 
         //sätter marginaler för den olika raderna av knappar
@@ -134,13 +135,17 @@ public class Alligator extends Application {
             bp.setCenter(temp);
         });
 
+        Button logOut = new Button("Logga ut");
+        logOut.setOnAction(e -> start(primaryStage));
+
+
         Image image = new Image("logo.png");
         ImageView iv1 = new ImageView();
         iv1.setImage(image);
 
 
         //lägger de övre knapparna i horisontell låda //och bild?
-        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton, persButton,iv1);
+        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton, persButton,logOut, iv1);
 
 
         //skapar adminknappar
@@ -204,7 +209,7 @@ public class Alligator extends Application {
         temp.getChildren().addAll(adminButtons,artMeny);
         bp.setCenter(temp);
         bp.setStyle("-fx-background-color: #FFFFFF;");
-        adminScene = new Scene(bp, 1180, 620);
+        Scene adminScene = new Scene(bp, 1240, 620);
         adminScene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setScene(adminScene);
         primaryStage.show();
@@ -241,7 +246,7 @@ public class Alligator extends Application {
                 System.out.println(ex.getMessage());
             }
 
-            ObservableList<Article> data = db.getSearchData(levVal.getText(),nameVal.getText(),nrVal.getText(),from,to);
+            ObservableList<Article> data = db.getSearchData(levVal.getText().trim(),nameVal.getText().trim(),nrVal.getText().trim(),from,to);
 
             showTable(4, data);
         });
@@ -269,7 +274,14 @@ public class Alligator extends Application {
 
         Button skapaArt = new Button("Lägg till artikel");
         skapaArt.setOnAction(e->{
-            if(db.createArticle((String)levCombo.getValue(), prodValArtTx.getText(),  prodNrValArtTx.getText())){
+            String lev = (String) levCombo.getValue();
+            lev = lev.trim();
+            String prod =  prodValArtTx.getText();
+            prod = prod.trim();
+            String nr = prodNrValArtTx.getText();
+            nr = nr.trim();
+
+            if(db.createArticle(lev, prod, nr)){
                 AlertBox.display("Meddelande","Artikel tillagd");
             }
             else{
@@ -317,8 +329,8 @@ public class Alligator extends Application {
                 FXCollections.observableArrayList(
                         "3000"
                 );
-        ComboBox<String> projCB = new ComboBox<>(projOptions);
-        projCB.setValue("3000");
+        TextField projCB = new TextField();
+        projCB.setText("3000");
         projCB.setEditable(true);
         ObservableList<String> prioOptions =
                 FXCollections.observableArrayList(
@@ -332,12 +344,14 @@ public class Alligator extends Application {
 
         Button skapaBest = new Button("Lägg beställning");
         skapaBest.setOnAction(e ->{
-            confirmOrder((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getValue(), prioCB.getValue(), chem);
-            levCB.setValue(" ");
-            prodCB.setValue(" ");
-            nrTx.setText(" ");
+            if(confirmOrder((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getText(), prioCB.getValue(), chem)){
+                AlertBox.display("Meddelande","Beställning lagd. ");
+            }else{
+                AlertBox.display("Meddelande","Beställning kunde inte läggas. ");
+            }
+
             prisTx.setText(" ");
-            projCB.setValue("3000");
+            projCB.setText("3000");
             prioCB.setValue("Normal");
             chem.setSelected(false);
         } );
@@ -481,12 +495,12 @@ public class Alligator extends Application {
 
         return gp;
     }
-    private void confirmOrder(String lev, String prod, String nr, String pris, String proj, String prio, CheckBox chem){
+    private boolean confirmOrder(String lev, String prod, String nr, String pris, String proj, String prio, CheckBox chem){
         String chemText = " ";
         if(chem.isSelected()){
             chemText = "Ny kemikalie";
         }
-        db.addBest(lev,prod,nr,pris,proj,prio,chemText,currentUser.getName()); //läggbest
+        return db.addBest(lev,prod,nr,pris,proj,prio,chemText,currentUser.getName()); //läggbest
     }
     private void showTable(int i, ObservableList<Article> dataI){
 
@@ -548,15 +562,9 @@ public class Alligator extends Application {
         col_action.setCellFactory(e-> new ButtonCell(i));
 
         if(i==0){
-            tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol);
-            if(currentUser.isFullAdmin()) {
-                tab.getColumns().add(col_action);
-            }
+            tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol,col_action);
         }else if(i==1){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol);
-            if(currentUser.isOrderAdmin()) {
-                tab.getColumns().add(col_action);
-            }
+            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol,col_action);
         }else if(i==2){
             tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
         }else if(i==3){
@@ -609,20 +617,33 @@ public class Alligator extends Application {
         final Button cellButton = new Button();
         ButtonCell(int a){
             String name = "";
+            boolean b = true;
             if(a==0){
                 name = "Godkänn";
+                if(!currentUser.isFullAdmin()) {
+                    b = false;
+                }
             }else if(a==1){
                 name = "Beställd";
+                if(!currentUser.isOrderAdmin()) {
+                    b = false;
+                }
             }else if(a==2){
                 name = "Levererad";
             }
             cellButton.setText(name);
+            boolean finalB = b;
             cellButton.setOnAction(e->{
-                int i = getTableRow().getIndex();
-                ObservableList<Article> data = getTableView().getItems();
-                Article selArt = data.get(i);
-                db.orderAccepted(selArt.getTable(), selArt.getID()); //kanske också kyl
-                showTable(a,null);
+                if(!finalB){
+                    AlertBox.display("Meddelande","Adminrätt krävs. ");
+                }else{
+                    int i = getTableRow().getIndex();
+                    ObservableList<Article> data = getTableView().getItems();
+                    Article selArt = data.get(i);
+                    db.orderAccepted(selArt.getTable(), selArt.getID());
+                    showTable(a,null);
+                }
+
             });
 
         }

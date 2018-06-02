@@ -96,7 +96,7 @@ public class Database {
 
 
     /* Lägger in en artikel i bests*/
-    public void addBest(String lev, String name, String nr, String pris, String proj, String prio, String chem, String user) {
+    public boolean addBest(String lev, String name, String nr, String pris, String proj, String prio, String chem, String user) {
         String sql = "INSERT INTO orders(lev,name,nr,pris,proj,prio,chemText,added,user,tabell) VALUES(?,?,?,?,?,?,?,julianday('now')+0.5,?,?)";
         String currTable = "bests";
         try (Connection conn = this.connect();
@@ -113,6 +113,7 @@ public class Database {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+            return false;
         }
         sql = "UPDATE articles SET uses = uses + 1 WHERE lev = ? AND name = ? AND nr = ?";
         try {
@@ -125,6 +126,7 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        return true;
 
 
 
@@ -244,6 +246,9 @@ public class Database {
         }
         top5.remove(4,top5.size()-1);
         top5.add(new Separator());
+        top5.add(new Separator());
+        top5.add(new Separator());
+        top5.add(new Separator());
         top5.addAll(prods);
         return top5;
     }
@@ -267,6 +272,11 @@ public class Database {
         return nr;
     }
     public boolean createArticle(String lev, String name, String nr){
+        if(lev.length()<1 || name.length()<1 || nr.length()<1){
+            return false;
+        }
+        lev = lev.toUpperCase();
+        name = name.toUpperCase();
         String sql = "INSERT INTO articles(lev,name,nr) VALUES(?,?,?)";
 
         try (Connection conn = this.connect();
