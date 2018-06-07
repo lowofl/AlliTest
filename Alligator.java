@@ -386,7 +386,7 @@ public class Alligator extends Application {
         gp.setAlignment(Pos.TOP_LEFT);
         ObservableList<Object> levArtOptions = db.getLevOptions();
 
-        ChoiceBox<Object> levCB = new ChoiceBox<>(levArtOptions);
+        levCB = new ChoiceBox<>(levArtOptions);
         ChoiceBox<Object> prodCB = new ChoiceBox<>();
         levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levCB.getValue())));
 
