@@ -20,7 +20,7 @@ public class Alligator extends Application {
 
     private ObservableList<Article> data;
     private BorderPane bp;
-    private ChoiceBox levCB;
+    private ChoiceBox levCB, levArtCB;
     private Database db = new Database("database.db");
     private User currentUser;
     private HBox upperButtons, adminButtons, bestButtons, anvButtons;
@@ -295,6 +295,7 @@ public class Alligator extends Application {
             }
 
             levCB.setItems(db.getLevOptions());
+            levArtCB.setItems(db.getLevOptions());
             levCombo.setItems(db.getLevOnly());
             levCombo.setValue("");
             prodValArtTx.setText("");
@@ -331,10 +332,6 @@ public class Alligator extends Application {
         TextField prisTx = new TextField();
         prisTx.setText("");
 
-        ObservableList<String> projOptions =
-                FXCollections.observableArrayList(
-                        "3000"
-                );
         TextField projCB = new TextField();
         projCB.setText("3000");
         projCB.setEditable(true);
@@ -386,20 +383,20 @@ public class Alligator extends Application {
         gp.setAlignment(Pos.TOP_LEFT);
         ObservableList<Object> levArtOptions = db.getLevOptions();
 
-        levCB = new ChoiceBox<>(levArtOptions);
+        levArtCB = new ChoiceBox<>(levArtOptions);
         ChoiceBox<Object> prodCB = new ChoiceBox<>();
-        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levCB.getValue())));
+        levArtCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levArtCB.getValue())));
 
         TextField nrTx = new TextField();
         nrTx.setEditable(false);
-        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr((String)levCB.getValue(),(String)prodCB.getValue())));
+        prodCB.setOnAction(e-> nrTx.setText(db.getProdNr((String)levArtCB.getValue(),(String)prodCB.getValue())));
 
         Button taBortArt = new Button("Ta bort artikel");
         taBortArt.setOnAction(e->{
-            if(db.removeArticle((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText() )){
+            if(db.removeArticle((String)levArtCB.getValue(), (String)prodCB.getValue(), nrTx.getText() )){
                 AlertBox.display("Meddelande","Artikel borttagen");
-                levCB.setItems(db.getLevOptions());
-                levCB.setValue("");
+                levArtCB.setItems(db.getLevOptions());
+                levArtCB.setValue("");
                 prodCB.setValue("");
                 nrTx.setText("");
             }
@@ -412,7 +409,7 @@ public class Alligator extends Application {
         gp.add(new Text("  Leverantör: "),0,0);
         gp.add(new Text("  Produkt: "),0, 1);
         gp.add(new Text("  Produktummer: "),0, 2);
-        gp.add(levCB,1,0);
+        gp.add(levArtCB,1,0);
         gp.add(prodCB,1,1);
         gp.add(nrTx,1,2);
         gp.add(taBortArt,1,3);
