@@ -93,15 +93,12 @@ public class Alligator extends Application {
         bestButtons = new HBox(5);
         anvButtons = new HBox(5);
         primaryStage.setTitle("Alligator Bioscience");
-        primaryStage.setMinHeight(600);
+        primaryStage.setMinHeight(620);
         primaryStage.setMinWidth(1200);
 
 
         //sätter marginaler för den olika raderna av knappar
         BorderPane.setMargin(upperButtons, new Insets(10, 0, 10, 10));
-        BorderPane.setMargin(adminButtons, new Insets(0, 0, 0, 10));
-        BorderPane.setMargin(bestButtons, new Insets(0, 0, 0, 10));
-        BorderPane.setMargin(anvButtons, new Insets(0, 0, 0, 10));
 
 
 
@@ -117,12 +114,14 @@ public class Alligator extends Application {
         adminButton.setOnAction(e -> {
             VBox temp = new VBox(10);
             temp.getChildren().addAll(adminButtons,artMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
         Button bestButton = new Button("Beställningar");
         bestButton.setOnAction(e -> {
             VBox temp = new VBox(10);
             temp.getChildren().addAll(bestButtons,laggMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
         Button rappButton = new Button("Rapporter");
@@ -132,6 +131,7 @@ public class Alligator extends Application {
         persButton.setOnAction(e -> {
             VBox temp = new VBox(10);
             temp.getChildren().addAll(anvButtons,addAnvMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
 
@@ -153,6 +153,7 @@ public class Alligator extends Application {
         artButton.setOnAction(e ->{
             VBox temp = new VBox(10);
             temp.getChildren().addAll(adminButtons,artMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
 
@@ -160,6 +161,7 @@ public class Alligator extends Application {
         taBortArtButton.setOnAction(e ->{
             VBox temp = new VBox(10);
             temp.getChildren().addAll(adminButtons,taBortMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
 
@@ -170,6 +172,7 @@ public class Alligator extends Application {
         taBortAnvButton.setOnAction(e -> {
             VBox temp = new VBox(10);
             temp.getChildren().addAll(anvButtons,taBortAnvMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
 
@@ -177,6 +180,7 @@ public class Alligator extends Application {
         addAnvButton.setOnAction(e -> {
             VBox temp = new VBox(10);
             temp.getChildren().addAll(anvButtons,addAnvMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
 
@@ -187,6 +191,7 @@ public class Alligator extends Application {
         laggBest.setOnAction(e -> {
             VBox temp = new VBox(10);
             temp.getChildren().addAll(bestButtons,laggMeny);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
         Button nyBestButton = new Button("För attest");
@@ -207,6 +212,7 @@ public class Alligator extends Application {
         bp.setTop(upperButtons);
         VBox temp = new VBox(10);
         temp.getChildren().addAll(adminButtons,artMeny);
+        BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
         bp.setCenter(temp);
         bp.setStyle("-fx-background-color: #FFFFFF;");
         Scene adminScene = new Scene(bp, 1240, 620);
