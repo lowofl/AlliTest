@@ -434,7 +434,10 @@ public class Alligator extends Application {
             if(!currentUser.isOrderAdmin()){
                 AlertBox.display("Meddelande","Adminrätt krävs för denna åtgärd. ");
             }else{
-                if((admin.isSelected() || cost.isSelected()) && !currentUser.isFullAdmin()){
+
+                if(pwValTx.getText().length()<6){
+                    AlertBox.display("Meddelande","Lösenordet måste innehålla minst 6 tecken. ");
+                }else if((admin.isSelected() || cost.isSelected()) && !currentUser.isFullAdmin()){
                     AlertBox.display("Meddelande","Adminrätt krävs för denna åtgärd. ");
                 }else if(db.createUser(anvValTx.getText(),pwValTx.getText(),admin.isSelected(),cost.isSelected())){
                     AlertBox.display("Meddelande","Användare tillagd");
