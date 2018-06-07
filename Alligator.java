@@ -244,12 +244,13 @@ public class Alligator extends Application {
 
         srch.setOnAction(e->{
 
-            int from = (int)ChronoUnit.DAYS.between(epoch, now)-30, to = (int) ChronoUnit.DAYS.between(epoch, now);
+            int from,to;
             try{
                 from = (int)dp.getValue().toEpochDay();
                 to = (int)dtp.getValue().toEpochDay();
             }catch(NullPointerException ex){
                 System.out.println(ex.getMessage());
+                from = (int)ChronoUnit.DAYS.between(epoch, now)-30; to = (int) ChronoUnit.DAYS.between(epoch, now)+1;
             }
 
             ObservableList<Article> data = db.getSearchData(levVal.getText().trim(),nameVal.getText().trim(),nrVal.getText().trim(),from,to);
