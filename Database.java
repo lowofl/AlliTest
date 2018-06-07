@@ -109,7 +109,7 @@ public class Database {
             pstmt.setString(6, prio);
             pstmt.setString(7, chem);
             pstmt.setString(8, user);
-            pstmt.setString(9,currTable);
+            pstmt.setString(9, currTable);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -133,7 +133,7 @@ public class Database {
     }
     /* Returnerar data över en tabell i bests */
     public ObservableList <Article> getTable(int i){
-        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen) FROM orders WHERE tabell = ";
+        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,date(ordered),date(added),user,kyl,date(mottagen),tabell FROM orders WHERE tabell = ";
         if(i==0){
             sql += "'bests'";
         }else if(i==1){
@@ -314,6 +314,7 @@ public class Database {
             table = "orders";
         }else if(table.equals("orders")){
             table = "deliveries";
+            setOrdered(id);
         }else if(table.equals("deliveries")){
             setMottagen(id);
             table = "fintable";
@@ -346,6 +347,17 @@ public class Database {
     }
     private void setMottagen(int id){
         String sql = "UPDATE orders SET mottagen=julianday('now')+0.5 WHERE id=?";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    private void setOrdered(int id){
+        String sql = "UPDATE orders SET ordered=julianday('now')+0.5 WHERE id=?";
         try {
             Connection conn = connect();
             PreparedStatement pstmt = conn.prepareStatement(sql);

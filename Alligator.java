@@ -258,7 +258,7 @@ public class Alligator extends Application {
         });
         search.getChildren().addAll(new Text("  Leverantör: " ), levVal, new Text("Namn: " ), nameVal, new Text("Nummer: "), nrVal, new Text("Från: "),dp, new Text("Till: "),dtp,srch);
         fullSearch.getChildren().addAll(new Text("  Filtrera: "),search);
-        int from = (int)ChronoUnit.DAYS.between(epoch, now)-30, to = (int) ChronoUnit.DAYS.between(epoch, now);
+        int from = (int)ChronoUnit.DAYS.between(epoch, now)-30, to = (int) ChronoUnit.DAYS.between(epoch, now)+1;
         ObservableList<Article> data = db.getSearchData("","","",from,to);
         showTable(4,data);
     }
@@ -571,7 +571,7 @@ public class Alligator extends Application {
         }else if(i==2){
             tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
         }else if(i==3){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes, col_action);
         }else if(i==4){
             tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
         }

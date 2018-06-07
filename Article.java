@@ -67,7 +67,7 @@ public class Article {
         this.ordered.set(ordered);
     }
 
-    private SimpleStringProperty ordered = new SimpleStringProperty();
+    private SimpleStringProperty ordered = new SimpleStringProperty("ord");
 
     public String getPris() {
         return pris.get();
