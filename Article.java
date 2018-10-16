@@ -83,6 +83,20 @@ public class Article {
 
     private SimpleStringProperty pris = new SimpleStringProperty();
 
+    public int getAntal() {
+        return antal.get();
+    }
+
+    public SimpleIntegerProperty antalProperty() {
+        return antal;
+    }
+
+    public void setAntal(int antal) {
+        this.antal.set(antal);
+    }
+
+    private SimpleIntegerProperty antal = new SimpleIntegerProperty();
+
     public String getKyl() {
         return kyl.get();
     }

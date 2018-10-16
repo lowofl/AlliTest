@@ -60,6 +60,7 @@ public class Database {
                 + "	name text NOT NULL,\n"
                 + "	nr text NOT NULL,\n"
                 + " pris text,\n"
+                + " antal integer DEFAULT 1,\n"
                 + "	proj text,\n"
                 + " prio text, \n"
                 + " chemText text, \n"
@@ -70,7 +71,9 @@ public class Database {
                 + " mottagen real, \n"
                 + " tabell text NOT NULL \n"
                 + ");";
-
+        String updater = "ALTER TABLE orders ADD antal integer DEFAULT 1"; // behövs bara en gång, ger error SQL error or missing database
+                                                                           // om kolumnen antal redan finns, men detta gör alltså ingenting.
+                                                                           // Behövs bara till databaser skapade innan iteration 5.
         try (
                 Connection conn = DriverManager.getConnection(name);
                 Statement stmt = conn.createStatement()) {
@@ -78,11 +81,14 @@ public class Database {
             stmt.execute(levs);
             stmt.execute(orders);
             stmt.execute(users);
+            stmt.execute(updater);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         createUser("Olof","temp",true,true);
     }
+
+
     private Connection connect() {
         // SQLite connection string
         Connection conn = null;
@@ -93,23 +99,42 @@ public class Database {
         }
         return conn;
     }
+    public ObservableList<User> getUsers(){
+        ObservableList<User> users = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM users";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
 
+            ResultSet rs = pstmt.executeQuery();
+            while(rs.next()){
+                User user = new User();
+                user.setName(rs.getString("anv"));
+                int admin = rs.getInt("admin"), cost = rs.getInt("cost");
+                user.setAdmin(admin==1,cost==1);
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
 
-    /* Lägger in en artikel i bests*/
-    public boolean addBest(String lev, String name, String nr, String pris, String proj, String prio, String chem, String user) {
-        String sql = "INSERT INTO orders(lev,name,nr,pris,proj,prio,chemText,added,user,tabell) VALUES(?,?,?,?,?,?,?,julianday('now')+0.5,?,?)";
+        return users;
+    }
+    public boolean addBest(String lev, String name, String nr, int antal, String pris, String proj, String prio, String chem, String user) {
+        String sql = "INSERT INTO orders(lev,name,nr,antal,pris,proj,prio,chemText,added,user,tabell) VALUES(?,?,?,?,?,?,?,?,julianday('now')+0.5,?,?)";
         String currTable = "bests";
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, lev);
             pstmt.setString(2, name);
             pstmt.setString(3, nr);
-            pstmt.setString(4, pris);
-            pstmt.setString(5, proj);
-            pstmt.setString(6, prio);
-            pstmt.setString(7, chem);
-            pstmt.setString(8, user);
-            pstmt.setString(9, currTable);
+            pstmt.setInt(4,antal);
+            pstmt.setString(5, pris);
+            pstmt.setString(6, proj);
+            pstmt.setString(7, prio);
+            pstmt.setString(8, chem);
+            pstmt.setString(9, user);
+            pstmt.setString(10, currTable);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -133,7 +158,7 @@ public class Database {
     }
     /* Returnerar data över en tabell i bests */
     public ObservableList <Article> getTable(int i){
-        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,date(ordered),date(added),user,kyl,date(mottagen),tabell FROM orders WHERE tabell = ";
+        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,date(ordered),date(added),user,kyl,date(mottagen),tabell FROM orders WHERE tabell = ";
         if(i==0){
             sql += "'bests'";
         }else if(i==1){
@@ -155,6 +180,7 @@ public class Database {
                 art.setLev(rs.getString("lev"));
                 art.setName(rs.getString("name"));
                 art.setPris(rs.getString("pris"));
+                art.setAntal(rs.getInt("antal"));
                 art.setUser(rs.getString("user"));
                 art.setProj(rs.getString("proj"));
                 art.setNr(rs.getString("nr"));
@@ -270,6 +296,27 @@ public class Database {
         }
 
         return nr;
+    }
+    public Article getArtByNr(String nr){
+        Article art = new Article();
+        String sql = "SELECT * FROM articles WHERE nr=?";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, nr);
+
+            ResultSet rs = pstmt.executeQuery();
+            art.setID(rs.getInt("id"));
+            art.setLev(rs.getString("lev"));
+            art.setName(rs.getString("name"));
+            art.setNr(rs.getString("nr"));
+            rs.close();
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return art;
     }
     public boolean createArticle(String lev, String name, String nr){
         if(lev.length()<1 || name.length()<1 || nr.length()<1){
@@ -467,6 +514,19 @@ public class Database {
         }
         return true;
     }
+    public void adminDeleteUser(String anv){
+        String sql = "DELETE FROM users WHERE anv=?";
+
+        try (
+
+                Connection conn = this.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, anv);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
     public void clearLev(){
         String sql = "UPDATE orders SET tabell='reports' WHERE tabell='fintable' AND mottagen+30<julianday('now')+0.5"; //Hårdkodad 30 dagar remove
 
@@ -480,7 +540,7 @@ public class Database {
     }
     public ObservableList<Article> getSearchData(String lev, String name, String nr, int from, int to){
         ObservableList<Article> data = FXCollections.observableArrayList();
-        String sql = "SELECT id,lev,name,nr,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen) FROM orders WHERE tabell = 'reports'"
+        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen) FROM orders WHERE tabell = 'reports'"
                 + " AND lev LIKE ? AND name LIKE ? AND nr LIKE ? AND added-2458261+17673 > ? AND added-2458261+17673 < ?;"; //2458261+17673
         try {
             Connection conn = connect();
@@ -497,6 +557,7 @@ public class Database {
                 art.setLev(rs.getString("lev"));
                 art.setName(rs.getString("name"));
                 art.setPris(rs.getString("pris"));
+                art.setAntal(rs.getInt("antal"));
                 art.setUser(rs.getString("user"));
                 art.setProj(rs.getString("proj"));
                 art.setNr(rs.getString("nr"));
@@ -515,6 +576,16 @@ public class Database {
         }
         return data;
     }
-
+    public void deleteOrder(int id){
+        String sql = "DELETE FROM orders WHERE id=?";
+        try (
+            Connection conn = this.connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }
 

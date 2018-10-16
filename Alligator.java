@@ -24,6 +24,7 @@ public class Alligator extends Application {
     private Database db = new Database("database.db");
     private User currentUser;
     private HBox upperButtons, adminButtons, bestButtons, anvButtons;
+    private Button personalButton;
     private VBox fullSearch;
     public static void main(String args[]) {
 
@@ -99,8 +100,6 @@ public class Alligator extends Application {
 
         //sätter marginaler för den olika raderna av knappar
         BorderPane.setMargin(upperButtons, new Insets(10, 0, 10, 10));
-
-
 
         GridPane artMeny = createArtMeny();
         GridPane laggMeny = createLaggMeny();
@@ -184,7 +183,35 @@ public class Alligator extends Application {
             bp.setCenter(temp);
         });
 
-        anvButtons.getChildren().addAll(addAnvButton,taBortAnvButton);
+        personalButton = new Button("Visa användare");
+        personalButton.setOnAction(e -> {
+            VBox temp = new VBox(10);
+            TableView<User> tab = new TableView<>();
+            tab.setMaxHeight(385);
+            tab.setMaxWidth(400);
+            TableColumn<User,String> usrCol = new TableColumn<>("Användarnamn");
+            usrCol.setMinWidth(150);
+            usrCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+            TableColumn<User,String> adminCol = new TableColumn<>("Användarnivå");
+            adminCol.setMinWidth(150);
+            adminCol.setCellValueFactory(new PropertyValueFactory<>("admin"));
+
+            TableColumn col_action = new TableColumn<>("Action");
+            col_action.setMinWidth(100);
+            col_action.setSortable(false);
+            col_action.setCellFactory(a-> new ButtonCellUser(5));
+
+
+            tab.getColumns().addAll(usrCol, adminCol, col_action);
+            tab.setItems(db.getUsers());
+
+            temp.getChildren().addAll(anvButtons,tab);
+            BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
+            bp.setCenter(temp);
+        });
+
+        anvButtons.getChildren().addAll(addAnvButton,taBortAnvButton, personalButton);
 
         //skapar beställningsknappar
         Button laggBest = new Button("Lägg ny beställning");
@@ -324,11 +351,22 @@ public class Alligator extends Application {
         levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levCB.getValue())));
 
         TextField nrTx = new TextField();
-        nrTx.setEditable(false);
+        nrTx.setEditable(true);
         prodCB.setOnAction(e-> {
-            db.getProdNr((String) levCB.getValue(), (String) prodCB.getValue());
             nrTx.setText(db.getProdNr((String) levCB.getValue(), (String) prodCB.getValue()));
         });
+
+        Button searchByNr = new Button("Sök på nr");
+        searchByNr.setOnAction(e->{
+            Article art = db.getArtByNr(nrTx.getText());
+            levCB.setValue(art.getLev());
+            prodCB.setValue(art.getName());
+        });
+
+
+        TextField antalTx = new TextField();
+        antalTx.setText("1");
+        antalTx.setEditable(true);
 
         TextField prisTx = new TextField();
         prisTx.setText("");
@@ -348,7 +386,7 @@ public class Alligator extends Application {
 
         Button skapaBest = new Button("Lägg beställning");
         skapaBest.setOnAction(e ->{
-            if(confirmOrder((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText(),prisTx.getText(), projCB.getText(), prioCB.getValue(), chem)){
+            if(confirmOrder((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText(),antalTx.getText(), prisTx.getText(), projCB.getText(), prioCB.getValue(), chem)){
                 AlertBox.display("Meddelande","Beställning lagd. ");
             }else{
                 AlertBox.display("Meddelande","Beställning kunde inte läggas. ");
@@ -359,21 +397,26 @@ public class Alligator extends Application {
             prioCB.setValue("Normal");
             chem.setSelected(false);
         } );
+
         gp.add(new Text("  Leverantör: "),0,0);
         gp.add(new Text("  Produkt: "),0, 1);
-        gp.add(new Text("  Produktummer: "),0, 2);
-        gp.add(new Text("  Cirkapris: "),0, 3);
-        gp.add(new Text("  Projekt: "),0, 4);
-        gp.add(new Text("  Prioritet: "),0, 5);
-        gp.add(new Text("  Ny kemikalie: "),0, 6);
+        gp.add(new Text("  Produktnummer: "),0, 2);
+        gp.add(new Text("  Antal: "), 0,3);
+        gp.add(new Text("  Totalt cirkapris: "),0, 4);
+        gp.add(new Text("  Projekt: "),0, 5);
+        gp.add(new Text("  Prioritet: "),0, 6);
+        gp.add(new Text("  Ny kemikalie: "),0, 7);
         gp.add(levCB,1,0);
         gp.add(prodCB,1,1);
         gp.add(nrTx,1,2);
-        gp.add(prisTx,1,3);
-        gp.add(projCB,1,4);
-        gp.add(prioCB,1,5);
-        gp.add(chem,1,6);
-        gp.add(skapaBest, 1,7);
+        gp.add(antalTx, 1,3);
+        gp.add(prisTx,1,4);
+        gp.add(projCB,1,5);
+        gp.add(prioCB,1,6);
+        gp.add(chem,1,7);
+        gp.add(skapaBest, 1,8);
+
+        gp.add(searchByNr, 2,2);
 
         return gp;
     }
@@ -502,12 +545,22 @@ public class Alligator extends Application {
 
         return gp;
     }
-    private boolean confirmOrder(String lev, String prod, String nr, String pris, String proj, String prio, CheckBox chem){
+    private boolean confirmOrder(String lev, String prod, String nr, String antal, String pris, String proj, String prio, CheckBox chem){ //hanterar optionals
         String chemText = " ";
         if(chem.isSelected()){
             chemText = "Ny kemikalie";
         }
-        return db.addBest(lev,prod,nr,pris,proj,prio,chemText,currentUser.getName()); //läggbest
+        int antalInt;
+        try{
+            antalInt = Integer.parseInt(antal);
+        }catch(Exception e){
+            return false;
+        }
+        String checkNumber = db.getProdNr(lev,prod);
+        if(!checkNumber.equals(nr)){
+            return false;
+        }
+        return db.addBest(lev,prod,nr,antalInt,pris,proj,prio,chemText,currentUser.getName()); //läggbest
     }
     private void showTable(int i, ObservableList<Article> dataI){
 
@@ -530,6 +583,11 @@ public class Alligator extends Application {
         TableColumn<Article,String> nrCol = new TableColumn<>("Nummer");
         nrCol.setMinWidth(100);
         nrCol.setCellValueFactory(new PropertyValueFactory<>("nr"));
+
+        TableColumn<Article,String> antalCol = new TableColumn<>("Antal");
+        antalCol.setMinWidth(100);
+        antalCol.setCellValueFactory(new PropertyValueFactory<>("antal"));
+
         TableColumn<Article,String> prioCol = new TableColumn<>("Prioritet");
         prioCol.setMinWidth(100);
         prioCol.setCellValueFactory(new PropertyValueFactory<>("prio"));
@@ -568,16 +626,21 @@ public class Alligator extends Application {
         col_action.setSortable(false);
         col_action.setCellFactory(e-> new ButtonCell(i));
 
+        TableColumn delete_action = new TableColumn<>("Radera");
+        delete_action.setMinWidth(100);
+        delete_action.setSortable(false);
+        delete_action.setCellFactory(e-> new ButtonCellDelete(i));
+
         if(i==0){
-            tab.getColumns().addAll(levCol, nameCol, prisCol, projCol, chemCol, dateCol,col_action);
+            tab.getColumns().addAll(levCol, nameCol, prisCol, antalCol, projCol, chemCol, dateCol,col_action, delete_action);
         }else if(i==1){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol,col_action);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol, prioCol,userCol, dateCol,col_action,delete_action);
         }else if(i==2){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, userCol, bestCol, col_kyl, col_action);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol, userCol, bestCol, col_kyl, col_action);
         }else if(i==3){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, prioCol,userCol, dateCol, col_kylRes);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol,prioCol,userCol, dateCol, col_kylRes);
         }else if(i==4){
-            tab.getColumns().addAll(levCol, nameCol, nrCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
+            tab.getColumns().addAll(levCol, nameCol, nrCol,antalCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
         }
 
         VBox temp = new VBox(10);
@@ -643,7 +706,7 @@ public class Alligator extends Application {
             cellButton.setOnAction(e->{
                 if(!finalB){
                     AlertBox.display("Meddelande","Adminrätt krävs. ");
-                }else{
+                } else{
                     int i = getTableRow().getIndex();
                     ObservableList<Article> data = getTableView().getItems();
                     Article selArt = data.get(i);
@@ -656,6 +719,61 @@ public class Alligator extends Application {
         }
 
         //Display button if the row is not empty
+        @Override
+        protected void updateItem(Boolean t, boolean empty) {
+            super.updateItem(t, empty);
+            if(!empty){
+                setGraphic(cellButton);
+            }
+        }
+    }
+    private class ButtonCellDelete extends TableCell<Article, Boolean> {
+        final Button cellButton = new Button();
+        ButtonCellDelete(int a){
+            cellButton.setText("Radera");
+            cellButton.setOnAction(e->{
+                if(!currentUser.isFullAdmin()){
+                    AlertBox.display("Meddelande","Adminrätt krävs. ");
+                } else{
+                    int i = getTableRow().getIndex();
+                    ObservableList<Article> data = getTableView().getItems();
+                    Article selArt = data.get(i);
+                    db.deleteOrder(selArt.getID());
+                    showTable(a,null);
+                }
+
+            });
+
+        }
+
+        //Display button if the row is not empty
+        @Override
+        protected void updateItem(Boolean t, boolean empty) {
+            super.updateItem(t, empty);
+            if(!empty){
+                setGraphic(cellButton);
+            }
+        }
+    }
+    private class ButtonCellUser extends TableCell<User, Boolean> {
+        final Button cellButton = new Button();
+        ButtonCellUser(int a) {
+            String name = "Radera";
+
+            cellButton.setText(name);
+            cellButton.setOnAction(e -> {
+                int i = getTableRow().getIndex();
+                ObservableList<User> data = getTableView().getItems();
+                User usr = data.get(i);
+                if (!currentUser.isFullAdmin()) {
+                    AlertBox.display("Meddelande", "Adminrätt krävs. ");
+                } else {
+                    db.adminDeleteUser(usr.getName());
+                    personalButton.fire();
+
+                }
+            });
+        }
         @Override
         protected void updateItem(Boolean t, boolean empty) {
             super.updateItem(t, empty);
