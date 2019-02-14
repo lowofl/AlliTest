@@ -1,11 +1,13 @@
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -14,8 +16,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-
-
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellEditEvent;
 public class Alligator extends Application {
 
     private ObservableList<Article> data;
@@ -27,10 +29,7 @@ public class Alligator extends Application {
     private Button personalButton;
     private VBox fullSearch;
     public static void main(String args[]) {
-
-
         launch(args); //startar gui
-
     }
     @Override
     public void start(Stage primaryStage){
@@ -94,8 +93,7 @@ public class Alligator extends Application {
         bestButtons = new HBox(5);
         anvButtons = new HBox(5);
         primaryStage.setTitle("Alligator Bioscience");
-        primaryStage.setMinHeight(620);
-        primaryStage.setMinWidth(1200);
+        primaryStage.setMaximized(true);
 
 
         //sätter marginaler för den olika raderna av knappar
@@ -108,86 +106,114 @@ public class Alligator extends Application {
         GridPane addAnvMeny = createAddAnvMeny();
 
 
-        // bygger de övre knapparna
+        // Skapar alla knappar innan deras action är set - vissa actions påverkar andra knappar (bakgrundsfärg).
         Button adminButton = new Button("Artiklar");
+        adminButton.setStyle("-fx-background-color: #b9ceeb;"); //start-case
+        Button bestButton = new Button("Beställningar");
+        Button rappButton = new Button("Rapporter");
+        Button persButton = new Button("Personal");
+        Button logOut = new Button("Logga ut");
+        Button artButton = new Button("Ny artikel");
+        Button taBortArtButton = new Button("Ta bort artikel");
+        Button taBortAnvButton = new Button("Ta bort användare");
+        Button addAnvButton = new Button("Lägg till användare");
+        personalButton = new Button("Visa användare");
+        Button laggBest = new Button("Lägg ny beställning");
+        Button nyBestButton = new Button("För attest");
+        Button attestButton = new Button("Att beställa");
+        Button godkButton = new Button("Beställda");
+        Button levButton = new Button("Levererade");
+
+        //Alla actions, i form av lambdafunktioner. De sätter bakgrundsfärger och byter center i bp.
         adminButton.setOnAction(e -> {
             VBox temp = new VBox(10);
+            adminButton.setStyle("-fx-background-color: #b9ceeb;");
+            bestButton.setStyle("");
+            rappButton.setStyle("");
+            persButton.setStyle("");
+            artButton.setStyle("-fx-background-color: #b9ceeb;");
+            taBortArtButton.setStyle("");
             temp.getChildren().addAll(adminButtons,artMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-        Button bestButton = new Button("Beställningar");
         bestButton.setOnAction(e -> {
             VBox temp = new VBox(10);
+            bestButton.setStyle("-fx-background-color: #b9ceeb;");
+            adminButton.setStyle("");
+            rappButton.setStyle("");
+            persButton.setStyle("");
+            laggBest.setStyle("-fx-background-color: #b9ceeb;");
+            nyBestButton.setStyle("");
+            attestButton.setStyle("");
+            godkButton.setStyle("");
+            levButton.setStyle("");
             temp.getChildren().addAll(bestButtons,laggMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-        Button rappButton = new Button("Rapporter");
-        rappButton.setOnAction(e -> setRapp());
-
-        Button persButton = new Button("Personal");
+        rappButton.setOnAction(e -> {
+            bestButton.setStyle("");
+            adminButton.setStyle("");
+            rappButton.setStyle("-fx-background-color: #b9ceeb;");
+            persButton.setStyle("");
+            setRapp();
+        });
         persButton.setOnAction(e -> {
             VBox temp = new VBox(10);
+            bestButton.setStyle("");
+            adminButton.setStyle("");
+            rappButton.setStyle("");
+            persButton.setStyle("-fx-background-color: #b9ceeb;");
+            addAnvButton.setStyle("-fx-background-color: #b9ceeb;");
+            taBortAnvButton.setStyle("");
+            personalButton.setStyle("");
             temp.getChildren().addAll(anvButtons,addAnvMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-
-        Button logOut = new Button("Logga ut");
         logOut.setOnAction(e -> start(primaryStage));
-
-
-        Image image = new Image("logo.png");
-        ImageView iv1 = new ImageView();
-        iv1.setImage(image);
-
-
-        //lägger de övre knapparna i horisontell låda //och bild?
-        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton, persButton,logOut, iv1);
-
-
-        //skapar adminknappar
-        Button artButton = new Button("Ny artikel");
         artButton.setOnAction(e ->{
             VBox temp = new VBox(10);
+            artButton.setStyle("-fx-background-color: #b9ceeb;");
+            taBortArtButton.setStyle("");
             temp.getChildren().addAll(adminButtons,artMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-
-        Button taBortArtButton = new Button("Ta bort artikel");
         taBortArtButton.setOnAction(e ->{
             VBox temp = new VBox(10);
+            artButton.setStyle("");
+            taBortArtButton.setStyle("-fx-background-color: #b9ceeb;");
             temp.getChildren().addAll(adminButtons,taBortMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-
-
-        //skapar knappar för användarhantering
-
-        Button taBortAnvButton = new Button("Ta bort användare");
         taBortAnvButton.setOnAction(e -> {
             VBox temp = new VBox(10);
+            addAnvButton.setStyle("");
+            taBortAnvButton.setStyle("-fx-background-color: #b9ceeb;");
+            personalButton.setStyle("");
             temp.getChildren().addAll(anvButtons,taBortAnvMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-
-        Button addAnvButton = new Button("Lägg till användare");
         addAnvButton.setOnAction(e -> {
             VBox temp = new VBox(10);
+            addAnvButton.setStyle("-fx-background-color: #b9ceeb;");
+            taBortAnvButton.setStyle("");
+            personalButton.setStyle("");
             temp.getChildren().addAll(anvButtons,addAnvMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-
-        personalButton = new Button("Visa användare");
         personalButton.setOnAction(e -> {
             VBox temp = new VBox(10);
+            addAnvButton.setStyle("");
+            taBortAnvButton.setStyle("");
+            personalButton.setStyle("-fx-background-color: #b9ceeb;");
             TableView<User> tab = new TableView<>();
-            tab.setMaxHeight(385);
+            tab.setMaxHeight(1200);
             tab.setMaxWidth(400);
             TableColumn<User,String> usrCol = new TableColumn<>("Användarnamn");
             usrCol.setMinWidth(150);
@@ -210,25 +236,59 @@ public class Alligator extends Application {
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-
-        anvButtons.getChildren().addAll(addAnvButton,taBortAnvButton, personalButton);
-
-        //skapar beställningsknappar
-        Button laggBest = new Button("Lägg ny beställning");
         laggBest.setOnAction(e -> {
+            laggBest.setStyle("-fx-background-color: #b9ceeb;");
+            nyBestButton.setStyle("");
+            attestButton.setStyle("");
+            godkButton.setStyle("");
+            levButton.setStyle("");
             VBox temp = new VBox(10);
             temp.getChildren().addAll(bestButtons,laggMeny);
             BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
             bp.setCenter(temp);
         });
-        Button nyBestButton = new Button("För attest");
-        nyBestButton.setOnAction(e -> showTable(0,null));
-        Button attestButton = new Button("Att beställa");
-        attestButton.setOnAction(e -> showTable(1,null));
-        Button godkButton = new Button("Beställda");
-        godkButton.setOnAction(e -> showTable(2,null));
-        Button levButton = new Button("Levererade");
-        levButton.setOnAction(e -> showTable(3,null));
+        nyBestButton.setOnAction(e -> {
+            laggBest.setStyle("");
+            nyBestButton.setStyle("-fx-background-color: #b9ceeb;");
+            attestButton.setStyle("");
+            godkButton.setStyle("");
+            levButton.setStyle("");
+            showTable(0,null);
+        });
+        attestButton.setOnAction(e -> {
+            laggBest.setStyle("");
+            nyBestButton.setStyle("");
+            attestButton.setStyle("-fx-background-color: #b9ceeb;");
+            godkButton.setStyle("");
+            levButton.setStyle("");
+            showTable(1,null);
+        });
+        godkButton.setOnAction(e -> {
+            laggBest.setStyle("");
+            nyBestButton.setStyle("");
+            attestButton.setStyle("");
+            godkButton.setStyle("-fx-background-color: #b9ceeb;");
+            levButton.setStyle("");
+            showTable(2,null);
+        });
+        levButton.setOnAction(e -> {
+            laggBest.setStyle("");
+            nyBestButton.setStyle("");
+            attestButton.setStyle("");
+            godkButton.setStyle("");
+            levButton.setStyle("-fx-background-color: #b9ceeb;");
+            showTable(3,null);
+        });
+
+        Image image = new Image("logo.png");
+        ImageView iv1 = new ImageView();
+        iv1.setImage(image);
+        upperButtons.getChildren().addAll(adminButton, bestButton, rappButton, persButton,logOut, iv1);
+        anvButtons.getChildren().addAll(addAnvButton,taBortAnvButton, personalButton);
+
+
+
+
 
         //lägger adminknappar i horisontell låda
         adminButtons.getChildren().addAll(artButton,taBortArtButton);
@@ -242,7 +302,7 @@ public class Alligator extends Application {
         BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
         bp.setCenter(temp);
         bp.setStyle("-fx-background-color: #FFFFFF;");
-        Scene adminScene = new Scene(bp, 1240, 620);
+        Scene adminScene = new Scene(bp);
         adminScene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setScene(adminScene);
         primaryStage.show();
@@ -348,7 +408,9 @@ public class Alligator extends Application {
         ChoiceBox<Object> prodCB = new ChoiceBox<>();
         ObservableList<Object> levOptions = db.getLevOptions();
         levCB = new ChoiceBox<>(levOptions);
-        levCB.setOnAction(e-> prodCB.setItems(db.getProdOptions((String)levCB.getValue())));
+        levCB.setOnAction(e-> {
+            prodCB.setItems(db.getProdOptions((String)levCB.getValue()));
+        });
 
         TextField nrTx = new TextField();
         nrTx.setEditable(true);
@@ -388,14 +450,19 @@ public class Alligator extends Application {
         skapaBest.setOnAction(e ->{
             if(confirmOrder((String)levCB.getValue(), (String)prodCB.getValue(), nrTx.getText(),antalTx.getText(), prisTx.getText(), projCB.getText(), prioCB.getValue(), chem)){
                 AlertBox.display("Meddelande","Beställning lagd. ");
+                levCB.setValue("");
+                levCB.setItems(db.getLevOptions());
+                prodCB.setValue("");
+                nrTx.setText("");
+                antalTx.setText("1");
+                prisTx.setText(" ");
+                projCB.setText("3000");
+                prioCB.setValue("Normal");
+                chem.setSelected(false);
             }else{
                 AlertBox.display("Meddelande","Beställning kunde inte läggas. ");
             }
 
-            prisTx.setText(" ");
-            projCB.setText("3000");
-            prioCB.setValue("Normal");
-            chem.setSelected(false);
         } );
 
         gp.add(new Text("  Leverantör: "),0,0);
@@ -569,25 +636,25 @@ public class Alligator extends Application {
         Utnyttjar klassen buttoncell för knapparna i tabellen.
         */
         TableView<Article> tab = new TableView<>();
-        tab.setMaxHeight(385); //TODO fixa proper height för tabell??? eventuellt i insets
+        tab.setEditable(true);
+        tab.setMaxHeight(1000); //TODO fixa proper height för tabell??? eventuellt i insets
+        tab.setMinHeight(bp.getHeight()-300); //Hotfix??
 
         TableColumn<Article,String> levCol = new TableColumn<>("Leverantör");
-        levCol.setMinWidth(100);
+        levCol.setMinWidth(300);
         levCol.setCellValueFactory(new PropertyValueFactory<>("lev"));
         TableColumn<Article,String> projCol = new TableColumn<>("Projekt");
         projCol.setMinWidth(100);
         projCol.setCellValueFactory(new PropertyValueFactory<>("proj"));
         TableColumn<Article,String> nameCol = new TableColumn<>("Namn");
-        nameCol.setMinWidth(100);
+        nameCol.setMinWidth(500);
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
         TableColumn<Article,String> nrCol = new TableColumn<>("Nummer");
-        nrCol.setMinWidth(100);
+        nrCol.setMinWidth(150);
         nrCol.setCellValueFactory(new PropertyValueFactory<>("nr"));
-
         TableColumn<Article,String> antalCol = new TableColumn<>("Antal");
         antalCol.setMinWidth(100);
         antalCol.setCellValueFactory(new PropertyValueFactory<>("antal"));
-
         TableColumn<Article,String> prioCol = new TableColumn<>("Prioritet");
         prioCol.setMinWidth(100);
         prioCol.setCellValueFactory(new PropertyValueFactory<>("prio"));
@@ -595,7 +662,7 @@ public class Alligator extends Application {
         prisCol.setMinWidth(100);
         prisCol.setCellValueFactory(new PropertyValueFactory<>("pris"));
         TableColumn<Article,String> chemCol = new TableColumn<>("Ny kemikalie");
-        chemCol.setMinWidth(100);
+        chemCol.setMinWidth(120);
         chemCol.setCellValueFactory(new PropertyValueFactory<>("chemText"));
         TableColumn<Article,String> dateCol = new TableColumn<>("Skapad");
         dateCol.setMinWidth(100);
@@ -606,9 +673,17 @@ public class Alligator extends Application {
         TableColumn<Article,String> recCol = new TableColumn<>("Mottagen");
         recCol.setMinWidth(100);
         recCol.setCellValueFactory(new PropertyValueFactory<>("received"));
-        TableColumn<Article,String> userCol = new TableColumn<>("Användare");
-        userCol.setMinWidth(100);
+
+        TableColumn<Article,String> userCol = new TableColumn<>("Inlagd av ");
+        userCol.setMinWidth(200);
         userCol.setCellValueFactory(new PropertyValueFactory<>("user"));
+
+        TableColumn<Article,String> recuserCol = new TableColumn<>("Togs emot av");
+        recuserCol.setMinWidth(125);
+        recuserCol.setCellValueFactory(new PropertyValueFactory<>("recuser"));
+        TableColumn<Article,String> attuserCol = new TableColumn<>("Attesterades av");
+        attuserCol.setMinWidth(125);
+        attuserCol.setCellValueFactory(new PropertyValueFactory<>("attuser"));
 
 
         TableColumn col_kyl = new TableColumn<>("Placeras i");
@@ -631,19 +706,36 @@ public class Alligator extends Application {
         delete_action.setSortable(false);
         delete_action.setCellFactory(e-> new ButtonCellDelete(i));
 
+        TableColumn comment = new TableColumn<>("Kommentar");
+        comment.setMinWidth(300);
+        comment.setEditable(true);
+        comment.setSortable(false);
+        comment.setCellValueFactory(new PropertyValueFactory<>("comment"));
+        comment.setCellFactory(TextFieldTableCell.<Article>forTableColumn());
+        comment.setOnEditCommit(( Event y )-> {
+            CellEditEvent t = (CellEditEvent) y;
+            Article a = (Article) t.getTableView().getItems().get(t.getTablePosition().getRow());
+            db.setComment(a.getID(), (String) t.getNewValue());
+            data = db.getTable(i);
+            tab.setItems(data);
+        });
+
+
+
         if(i==0){
             tab.getColumns().addAll(levCol, nameCol, prisCol, antalCol, projCol, chemCol, dateCol,col_action, delete_action);
         }else if(i==1){
             tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol, prioCol,userCol, dateCol,col_action,delete_action);
         }else if(i==2){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol, userCol, bestCol, col_kyl, col_action);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol, userCol, bestCol, col_kyl, col_action, comment);
         }else if(i==3){
-            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol,prioCol,userCol, dateCol, col_kylRes);
+            tab.getColumns().addAll(levCol, nameCol, nrCol, antalCol,prioCol,attuserCol,recuserCol, dateCol, col_kylRes, comment);
         }else if(i==4){
-            tab.getColumns().addAll(levCol, nameCol, nrCol,antalCol,prisCol,projCol, prioCol,userCol, dateCol, recCol, col_kylRes);
+            tab.getColumns().addAll(levCol, nameCol, nrCol,antalCol,prisCol,projCol, prioCol,attuserCol, dateCol, recCol, col_kylRes);
         }
 
         VBox temp = new VBox(10);
+        BorderPane.setMargin(temp,new Insets(0, 0, 0, 10));
         if(dataI == null){
             data = db.getTable(i);
             temp.getChildren().addAll(bestButtons);
@@ -652,16 +744,17 @@ public class Alligator extends Application {
             data = dataI;
             temp.getChildren().addAll(fullSearch);
         }
-
         tab.setItems(data);
         temp.getChildren().addAll(tab);
         bp.setCenter(temp);
+
 
     }
     private class ListCell extends TableCell<Article, Boolean>{
         private ComboBox<String> alts = new ComboBox<>();
         ListCell(){
             ObservableList<String> options = FXCollections.observableArrayList();
+            options.add("-");
             options.add("RT");
             options.add("Kyl");
             options.add("Frys -20");
@@ -672,7 +765,8 @@ public class Alligator extends Application {
             });
             alts.setItems(options);
             alts.setEditable(false);
-            alts.setValue("RT");
+            alts.setValue("-");
+
 
         }
         @Override
@@ -705,12 +799,19 @@ public class Alligator extends Application {
             boolean finalB = b;
             cellButton.setOnAction(e->{
                 if(!finalB){
-                    AlertBox.display("Meddelande","Adminrätt krävs. ");
+
                 } else{
                     int i = getTableRow().getIndex();
                     ObservableList<Article> data = getTableView().getItems();
                     Article selArt = data.get(i);
-                    db.orderAccepted(selArt.getTable(), selArt.getID());
+                    selArt = db.getOrderByID(selArt.getID());
+                    if(cellButton.getText().equals("Levererad")){
+                        if(selArt.getKyl().equals("none")){
+                            AlertBox.display("Meddelande","Välj en kylplats. ");
+                            return;
+                        }
+                    }
+                    db.orderAccepted(selArt.getTable(), selArt.getID(), currentUser.getName());
                     showTable(a,null);
                 }
 
@@ -731,8 +832,9 @@ public class Alligator extends Application {
         final Button cellButton = new Button();
         ButtonCellDelete(int a){
             cellButton.setText("Radera");
+
             cellButton.setOnAction(e->{
-                if(!currentUser.isFullAdmin()){
+                if(!currentUser.isOrderAdmin()){
                     AlertBox.display("Meddelande","Adminrätt krävs. ");
                 } else{
                     int i = getTableRow().getIndex();

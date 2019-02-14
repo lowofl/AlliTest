@@ -1,7 +1,6 @@
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Separator;
-
 import java.sql.*;
 
 public class Database {
@@ -67,13 +66,12 @@ public class Database {
                 + " ordered real, \n"
                 + " added real, \n"
                 + " user text NOT NULL, \n"
-                + " kyl text DEFAULT RT, \n"
+                + " recuser text, \n"
+                + " attuser text, \n"
+                + " kyl text DEFAULT none, \n"
                 + " mottagen real, \n"
                 + " tabell text NOT NULL \n"
                 + ");";
-        String updater = "ALTER TABLE orders ADD antal integer DEFAULT 1"; // behövs bara en gång, ger error SQL error or missing database
-                                                                           // om kolumnen antal redan finns, men detta gör alltså ingenting.
-                                                                           // Behövs bara till databaser skapade innan iteration 5.
         try (
                 Connection conn = DriverManager.getConnection(name);
                 Statement stmt = conn.createStatement()) {
@@ -81,14 +79,12 @@ public class Database {
             stmt.execute(levs);
             stmt.execute(orders);
             stmt.execute(users);
-            stmt.execute(updater);
+            stmt.close();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         createUser("Olof","temp",true,true);
     }
-
-
     private Connection connect() {
         // SQLite connection string
         Connection conn = null;
@@ -158,7 +154,8 @@ public class Database {
     }
     /* Returnerar data över en tabell i bests */
     public ObservableList <Article> getTable(int i){
-        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,date(ordered),date(added),user,kyl,date(mottagen),tabell FROM orders WHERE tabell = ";
+        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,date(ordered),date(added),user,kyl,date(mottagen),tabell, recuser, attuser,comment FROM orders WHERE tabell = ";
+        //String sql = "SELECT * FROM orders WHERE tabell = ";
         if(i==0){
             sql += "'bests'";
         }else if(i==1){
@@ -191,6 +188,10 @@ public class Database {
                 art.setKyl(rs.getString("kyl"));
                 art.setTable(rs.getString("tabell"));
                 art.setReceived(rs.getString("date(mottagen)"));
+                art.setComment(rs.getString("comment"));
+                art.setRecuser(rs.getString("recuser"));
+                art.setAttuser(rs.getString("attuser"));
+
 
                 data.add(art);
             }
@@ -355,15 +356,16 @@ public class Database {
         }
         return true;
     }
-    public void orderAccepted(String table, int id){
+    public void orderAccepted(String table, int id, String user){
         String sql = "UPDATE orders SET tabell=? WHERE id=?";
         if(table.equals("bests")){
             table = "orders";
+            setAttUser(id,user);
         }else if(table.equals("orders")){
             table = "deliveries";
-            setOrdered(id);
+            setOrderedTime(id);
         }else if(table.equals("deliveries")){
-            setMottagen(id);
+            setMottagen(id,user);
             table = "fintable";
         }else if(table.equals("fintable")){
             table = "reports";
@@ -392,8 +394,21 @@ public class Database {
             System.out.println(e.getMessage());
         }
     }
-    private void setMottagen(int id){
-        String sql = "UPDATE orders SET mottagen=julianday('now')+0.5 WHERE id=?";
+    private void setMottagen(int id, String user){
+        System.out.println(user);
+        String sql = "UPDATE orders SET mottagen=julianday('now')+0.5, recuser = ? WHERE id=?";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,user);
+            pstmt.setInt(2, id);
+            pstmt.executeUpdate();
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    private void setOrderedTime(int id){
+        String sql = "UPDATE orders SET ordered=julianday('now')+0.5 WHERE id=?";
         try {
             Connection conn = connect();
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -403,12 +418,13 @@ public class Database {
             System.out.println(e.getMessage());
         }
     }
-    private void setOrdered(int id){
-        String sql = "UPDATE orders SET ordered=julianday('now')+0.5 WHERE id=?";
+    private void setAttUser(int id, String user){
+        String sql = "UPDATE orders SET attuser = ? WHERE id=?";
         try {
             Connection conn = connect();
             PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, id);
+            pstmt.setString(1, user);
+            pstmt.setInt(2, id);
             pstmt.executeUpdate();
         }catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -527,6 +543,41 @@ public class Database {
             System.out.println(e.getMessage());
         }
     }
+    public Article getOrderByID(int id){
+        Article art = new Article();
+        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen),comment,recuser,attuser FROM orders WHERE id=?";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1,id);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                art.setID(rs.getInt("id"));
+                art.setLev(rs.getString("lev"));
+                art.setName(rs.getString("name"));
+                art.setPris(rs.getString("pris"));
+                art.setAntal(rs.getInt("antal"));
+                art.setUser(rs.getString("user"));
+                art.setProj(rs.getString("proj"));
+                art.setNr(rs.getString("nr"));
+                art.setPrio(rs.getString("prio"));
+                art.setChemText(rs.getString("chemText"));
+                art.setOrdered(rs.getString("date(ordered)")); //är de getStrings?
+                art.setDate(rs.getString("date(added)"));
+                art.setKyl(rs.getString("kyl"));
+                art.setTable(rs.getString("tabell"));
+                art.setReceived(rs.getString("date(mottagen)"));
+                art.setRecuser(rs.getString("recuser"));
+                art.setAttuser(rs.getString("attuser"));
+                art.setComment(rs.getString("comment"));
+
+
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return art;
+    }
     public void clearLev(){
         String sql = "UPDATE orders SET tabell='reports' WHERE tabell='fintable' AND mottagen+30<julianday('now')+0.5"; //Hårdkodad 30 dagar remove
 
@@ -540,7 +591,7 @@ public class Database {
     }
     public ObservableList<Article> getSearchData(String lev, String name, String nr, int from, int to){
         ObservableList<Article> data = FXCollections.observableArrayList();
-        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen) FROM orders WHERE tabell = 'reports'"
+        String sql = "SELECT id,lev,name,nr,antal,pris,proj,prio,chemText,user,date(added),date(ordered),tabell,kyl,date(mottagen),comment,recuser,attuser FROM orders WHERE tabell = 'reports'"
                 + " AND lev LIKE ? AND name LIKE ? AND nr LIKE ? AND added-2458261+17673 > ? AND added-2458261+17673 < ?;"; //2458261+17673
         try {
             Connection conn = connect();
@@ -568,6 +619,9 @@ public class Database {
                 art.setKyl(rs.getString("kyl"));
                 art.setTable(rs.getString("tabell"));
                 art.setReceived(rs.getString("date(mottagen)"));
+                art.setRecuser(rs.getString("recuser"));
+                art.setAttuser(rs.getString("attuser"));
+                art.setComment(rs.getString("comment"));
 
                 data.add(art);
             }
@@ -584,6 +638,18 @@ public class Database {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    public void setComment(int id, String comment){
+        String sql = "UPDATE orders SET comment=? WHERE id=?";
+        try {
+            Connection conn = connect();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,comment);
+            pstmt.setInt(2, id);
+            pstmt.executeUpdate();
+        }catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }

@@ -1,0 +1,77 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE orders(
+	id integer PRIMARY KEY,
+	lev text NOT NULL,
+	name text NOT NULL,
+	nr text NOT NULL,
+ pris text,
+	proj text,
+ prio text, 
+ chemText text, 
+ ordered real, 
+ added real, 
+ user text NOT NULL, 
+ kyl text DEFAULT RT, 
+ mottagen real, 
+ tabell text NOT NULL 
+);
+INSERT INTO orders VALUES(1,'olle','balle','boys','','3000','Normal',' ',NULL,2458262.5666533446384,'Olof','RT',2458262.8922838889451,'reports');
+INSERT INTO orders VALUES(2,'','','','','3000','',' ',NULL,2458262.5666552200272,'Olof','RT',2458262.8922858913433,'reports');
+INSERT INTO orders VALUES(3,'','','','','3000','',' ',NULL,2458262.5666579280832,'Olof','RT',2458262.8922876734733,'reports');
+INSERT INTO orders VALUES(4,'','','','','3000','',' ',NULL,2458262.5666598261204,'Olof','Kyl',2458262.8923130784848,'reports');
+INSERT INTO orders VALUES(5,'','','','','3000','',' ',NULL,2458262.5666617827775,'Olof','RT',2458262.8923041318635,'reports');
+INSERT INTO orders VALUES(6,'olle','Bille','b','','3000','',' ',NULL,2458262.5666896644744,'Olof','RT',2458262.8923059375303,'reports');
+INSERT INTO orders VALUES(7,'olle','balle','boys','','3000','',' ',NULL,2458262.5667318747098,'Olof','RT',2458262.8923080207528,'reports');
+INSERT INTO orders VALUES(8,'olle','Bille','b','','3000','',' ',NULL,2458262.5667587039153,'Olof','RT',2458262.8923098956974,'reports');
+INSERT INTO orders VALUES(9,'olle','tolle','qweqweqwe','','3000','',' ',NULL,2458262.5668760651471,'Olof','Kyl',2458262.8924113429924,'reports');
+INSERT INTO orders VALUES(10,'olle','tolle','qweqweqwe','','3000','',' ',NULL,2458262.5669140742985,'Olof','Kyl',2458262.8924129510394,'reports');
+INSERT INTO orders VALUES(11,'olle','tolle','qweqweqwe','','3000','',' ',NULL,2458262.5670540161344,'Olof','Frys -80',2458262.8924146643356,'reports');
+INSERT INTO orders VALUES(12,'olle','nylle','asdawe','','3000','Normal',' ',NULL,2458262.5675584721669,'Olof','Frys -20',2458262.8924162381878,'reports');
+INSERT INTO orders VALUES(13,'olle','Bille','b','','3000','',' ',NULL,2458262.5676312384044,'Olof','Frys -20',2458262.8924181020302,'reports');
+INSERT INTO orders VALUES(14,'olle','Bille','b','','3000','',' ',NULL,2458262.5676617011478,'Olof','RT',2458262.8924200116138,'reports');
+INSERT INTO orders VALUES(15,'anders','33333333333333333333333333333333333333333 asd asd asd ','asdsad','','3000','Normal',' ',NULL,2458262.6047027891225,'Olof','RT',2458262.6048373028559,'reports');
+INSERT INTO orders VALUES(16,'olle','Bille','b','','3000','Normal',' ',NULL,2458262.6202170603235,'Olof','Frys -20',2458262.8924219096511,'reports');
+INSERT INTO orders VALUES(17,'','','','','3000','',' ',NULL,2458262.6202514581414,'Olof','Frys -80',2458262.892423865864,'reports');
+INSERT INTO orders VALUES(18,'olle','tolle','qweqweqwe','','3000','',' ',NULL,2458262.6202872566167,'Olof','RT',2458262.8924256133551,'reports');
+INSERT INTO orders VALUES(19,'olle','Bille','b',' ','3000','',' ',NULL,2458262.6203612152337,'Olof','RT',2458262.8924274190218,'reports');
+INSERT INTO orders VALUES(20,'olle','tolle','qweqweqwe','123','3000','Normal',' ',NULL,2458262.6213994562824,'Olof','RT',2458262.892429351698,'reports');
+INSERT INTO orders VALUES(21,'olle','Bille','b','3','3000','Normal',' ',NULL,2458262.6277010417581,'Olof','RT',2458262.8924310068185,'reports');
+INSERT INTO orders VALUES(22,'olle','Bille','b','','3000','Normal',' ',NULL,2458262.6289797220309,'Olof','RT',2458262.8924327778463,'reports');
+INSERT INTO orders VALUES(23,'olle','Bille','b','33','3000','Normal',' ',NULL,2458262.6316184028603,'Olof','RT',2458262.8924343632448,'reports');
+INSERT INTO orders VALUES(24,'anders','33333333333333333333333333333333333333333 asd asd asd ','asdsad','33','3000','Normal','Ny kemikalie',NULL,2458262.632486296173,'Olof','RT',2458262.8924361809019,'reports');
+INSERT INTO orders VALUES(25,'olle','Bille','b','','3000','Normal',' ',NULL,2458262.6369124422893,'Olof','RT',2458262.8924380904855,'reports');
+INSERT INTO orders VALUES(26,'olle','balle','boys','','3000','',' ',NULL,2458262.6369934024168,'Olof','RT',2458262.8924399885228,'reports');
+INSERT INTO orders VALUES(27,'olle','222222222222222222','22222222222222222','33','3000','',' ',NULL,2458262.6370556361905,'Olof','RT',2458262.8924419331895,'reports');
+INSERT INTO orders VALUES(28,'olle','balle','boys','','3000','Normal',' ',NULL,2458262.6379430094765,'Olof','RT',2458262.8924437268658,'reports');
+INSERT INTO orders VALUES(29,'olle','222222222222222222','22222222222222222','333','3000','',' ',NULL,2458262.6379872336563,'Olof','RT',2458262.8924456249031,'reports');
+INSERT INTO orders VALUES(30,'olle','nylle','asdawe','33','3000','',' ',NULL,2458262.6389024770929,'Olof','RT',2458262.8924474883014,'reports');
+INSERT INTO orders VALUES(31,'olle','222222222222222222','22222222222222222','22','3000','',' ',NULL,2458262.6389469792727,'Olof','RT',2458262.8924493636901,'reports');
+INSERT INTO orders VALUES(32,'olle','balle','boys','','3000','Normal',' ',NULL,2458262.642860856495,'Olof','RT',2458262.8924507523571,'reports');
+INSERT INTO orders VALUES(33,'olle','balle','boys','33','3000','Normal',' ',NULL,2458262.6435479859594,'Olof','RT',2458262.8924557754501,'reports');
+INSERT INTO orders VALUES(34,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6531927083135,'Olof','RT',2458262.8924576037654,'reports');
+INSERT INTO orders VALUES(35,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534089695446,'Olof','RT',2458262.8924594214225,'reports');
+INSERT INTO orders VALUES(36,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534131941653,'Olof','RT',2458262.8924610996357,'reports');
+INSERT INTO orders VALUES(37,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534151854613,'Olof','RT',2458262.8924630789413,'reports');
+INSERT INTO orders VALUES(38,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.653417025767,'Olof','RT',2458262.8924649649881,'reports');
+INSERT INTO orders VALUES(39,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534190743505,'Olof','RT',2458262.8924666205527,'reports');
+INSERT INTO orders VALUES(40,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534209723878,'Olof','RT',2458262.8924684377658,'reports');
+INSERT INTO orders VALUES(41,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534230320736,'Olof','RT',2458262.8924702776274,'reports');
+INSERT INTO orders VALUES(42,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.653424791555,'Olof','RT',2458262.892472222294,'reports');
+INSERT INTO orders VALUES(43,'olle','333','3444','444','3000','Normal',' ',NULL,2458262.6534267126849,'Olof','RT',2458262.8924742939702,'reports');
+INSERT INTO orders VALUES(44,'olle','333','3444','','3000','Normal',' ',NULL,2458262.6579082060835,'Olof','RT',2458262.8924761111832,'reports');
+INSERT INTO orders VALUES(45,'olle','balle','boys','','3000','Normal',' ',NULL,2458262.6591879859212,'Olof','RT',2458262.8924779048595,'reports');
+INSERT INTO orders VALUES(46,'olle','balle','boys','eqw','3000','Normal',' ',NULL,2458262.6592049767744,'Olof','RT',2458262.8924798264336,'reports');
+INSERT INTO orders VALUES(47,'olle','Bille','b','eqw','3000','Normal',' ',NULL,2458262.6592312961655,'Olof','RT',2458262.8924817706561,'reports');
+INSERT INTO orders VALUES(48,'olle','222222222222222222','22222222222222222','','3000','Normal',' ',NULL,2458262.6608439932525,'Olof','RT',2458262.8924836109618,'reports');
+INSERT INTO orders VALUES(49,'olle','balle','boys','333','3000','Normal',' ',NULL,2458262.8721744215205,'Olof','RT',2458262.892485219897,'reports');
+INSERT INTO orders VALUES(50,'123123123','333','33333','4444','3000','Normal',' ',NULL,2458262.8919286690916,'Olof','RT',2458262.8924869442954,'reports');
+INSERT INTO orders VALUES(51,'anders','sddsd','','asd','3000','Normal',' ',NULL,2458262.9060256366848,'Peter','RT',2458262.9065167940218,'fintable');
+INSERT INTO orders VALUES(52,'olle','balle','boys',' 123','3000','Normal',' ',NULL,2458262.9069786920972,'Peter','RT',NULL,'deliveries');
+INSERT INTO orders VALUES(53,'olle','balle','boys',' ','3000',' ',' ',NULL,2458262.9070471528898,'Peter','RT',NULL,'deliveries');
+INSERT INTO orders VALUES(54,'olle','nylle','asdawe','','3000','Normal',' ',NULL,2458262.9075057753631,'Anders','RT',NULL,'orders');
+INSERT INTO orders VALUES(55,'olle','333','3444','','3000','Normal',' ',NULL,2458262.9095317245493,'Nisse','RT',NULL,'bests');
+INSERT INTO orders VALUES(56,'olle','balle','boys','','3000','Normal',' ',NULL,2458262.9155382291763,'Anders','RT',NULL,'orders');
+INSERT INTO orders VALUES(57,'olle','222222222222222222','22222222222222222','123','3000','Normal',' ',NULL,2458263.3574212153781,'Olof','RT',NULL,'bests');
+INSERT INTO orders VALUES(58,'anders','sddsd','','','3000','Normal',' ',NULL,2458263.3677524188264,'Olof','RT',NULL,'orders');
+COMMIT;

@@ -40,6 +40,34 @@ public class Article {
 
     private SimpleStringProperty table = new SimpleStringProperty();
 
+    public String getRecuser() {
+        return recuser.get();
+    }
+
+    public SimpleStringProperty recuserProperty() {
+        return recuser;
+    }
+
+    public void setRecuser(String recuser) {
+        this.recuser.set(recuser);
+    }
+
+    private SimpleStringProperty recuser = new SimpleStringProperty();
+
+    public String getAttuser() {
+        return attuser.get();
+    }
+
+    public SimpleStringProperty attuserProperty() {
+        return attuser;
+    }
+
+    public void setAttuser(String attuser) {
+        this.attuser.set(attuser);
+    }
+
+    private SimpleStringProperty attuser = new SimpleStringProperty();
+
 
     public String getReceived() {
         return received.get();
@@ -111,6 +139,20 @@ public class Article {
 
     private SimpleStringProperty kyl = new SimpleStringProperty("RT");
 
+    public String getComment() {
+        return comment.get();
+    }
+
+    public SimpleStringProperty commentProperty() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment.set(comment);
+    }
+
+    private SimpleStringProperty comment = new SimpleStringProperty("comment");
+
 
     public void setLev(String lev) {
         this.lev.set(lev);
@@ -176,3 +218,4 @@ public class Article {
         return nr.get();
     }
 }
+

@@ -1,5 +1,4 @@
 import javafx.beans.property.SimpleStringProperty;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 public class User {
 
