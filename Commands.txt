@@ -1,0 +1,16 @@
+Spara f�rst undan en kopia av database.db.
+Sedan, i cmd i mappen:
+sqlite3 database.db
+.once out.txt
+.dump orders
+DROP TABLE orders; 
+
+Modifiera h�r out.txt, s� att det �r none, ist�llet f�r RT, under kyl DEFAULT text.
+
+sedan, i cmd:
+.read out.txt //ger error p� line 1 men fungeraer.
+
+ALTER TABLE orders ADD COLUMN recuser text
+ALTER TABLE orders ADD COLUMN attuser text
+
+Ska r�cka!
